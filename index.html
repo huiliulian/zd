@@ -1,0 +1,99 @@
+<!-- <iframe src="https://magenta-cuchufli-f7c44b.netlify.app" width="100%" height="100%" frameborder="0"></iframe>
+
+ -->
+
+
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>响应式嵌套页面</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background-color: #333;
+      color: white;
+      padding: 10px;
+      text-align: center;
+      position: relative;
+      z-index: 100;
+    }
+
+    .iframe-wrapper {
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 40px); /* 减去header高度 */
+      position: relative;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 600px) {
+      header {
+        font-size: 16px;
+      }
+      .iframe-wrapper {
+        height: calc(100vh - 40px);
+      }
+    }
+
+    @media (min-width: 601px) and (max-width: 1024px) {
+      header {
+        font-size: 20px;
+      }
+    }
+
+    @media (min-width: 1025px) {
+      header {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>当前设备：<span id="device-type">检测中...</span></header>
+    <div class="iframe-wrapper">
+      <iframe src="https://magenta-cuchufli-f7c44b.netlify.app" title="嵌套页面" scrolling="yes"></iframe>
+    </div>
+  </div>
+
+  <script>
+    function detectDevice() {
+      const width = window.innerWidth;
+      const span = document.getElementById('device-type');
+
+      if (width <= 600) {
+        span.textContent = '手机';
+      } else if (width <= 1024) {
+        span.textContent = '平板';
+      } else {
+        span.textContent = '桌面电脑';
+      }
+    }
+
+    detectDevice();
+    window.addEventListener('resize', detectDevice);
+  </script>
+</body>
+</html>
