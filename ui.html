@@ -1,0 +1,1862 @@
+<!DOCTYPE html><html lang="zh-CN"><head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>个人人生同步与评估系统 - 页面目录与功能规划</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.5.0/mermaid.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+    <style>
+        :root {
+            --primary-black: #1a1a1a;
+            --primary-blue: #3b82f6;
+            --accent-yellow: #fbbf24;
+            --neutral-white: #ffffff;
+            --neutral-gray: #6b7280;
+            --bg-dark: #0f0f0f;
+            --bg-card: #1f1f1f;
+            --border-color: #374151;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--neutral-white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .serif-font {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .toc-fixed {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            z-index: 1000;
+            padding: 2rem 1.5rem;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-black) 0%, var(--bg-card) 100%);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 2rem;
+            height: 70vh;
+        }
+        
+        .bento-main {
+            grid-row: 1 / 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3rem;
+        }
+        
+        .bento-side-1 {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--primary-blue);
+            border-radius: 1rem;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .bento-side-2 {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid var(--accent-yellow);
+            border-radius: 1rem;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--primary-blue) 50%, transparent 100%);
+            margin: 4rem 0;
+        }
+        
+        .page-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .page-card:hover {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+        
+        .citation {
+            color: var(--accent-yellow);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .citation:hover {
+            text-decoration: underline;
+        }
+        
+        .toc-link {
+            color: var(--neutral-gray);
+            text-decoration: none;
+            padding: 0.5rem 0;
+            display: block;
+            transition: color 0.3s ease;
+        }
+        
+        .toc-link:hover {
+            color: var(--primary-blue);
+        }
+        
+        .toc-link.active {
+            color: var(--primary-blue);
+            font-weight: 500;
+        }
+        
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 800px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mermaid-container .mermaid {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            cursor: grab;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .mermaid-container .mermaid svg {
+            max-width: 100%;
+            height: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid-container .mermaid:active {
+            cursor: grabbing;
+        }
+
+        .mermaid-container.zoomed .mermaid {
+            height: 100%;
+            width: 100%;
+            cursor: grab;
+        }
+
+        .mermaid-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .mermaid-control-btn {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #374151;
+            font-size: 14px;
+            min-width: 36px;
+            height: 36px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mermaid-control-btn:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .mermaid-control-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Enhanced mermaid node styling for better contrast */
+        .mermaid .node rect,
+        .mermaid .node circle,
+        .mermaid .node ellipse,
+        .mermaid .node polygon {
+            stroke-width: 2px !important;
+        }
+        
+        /* Ensure text contrast for different node types */
+        .mermaid .node text {
+            font-weight: 500 !important;
+            font-size: 14px !important;
+        }
+        
+        /* Specific contrast improvements for primary nodes (blue background) */
+        .mermaid .node[style*="fill:#3b82f6"] text,
+        .mermaid .node[style*="fill: rgb(59, 130, 246)"] text {
+            fill: #ffffff !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Specific contrast improvements for secondary nodes (yellow background) */
+        .mermaid .node[style*="fill:#fbbf24"] text,
+        .mermaid .node[style*="fill: rgb(251, 191, 36)"] text {
+            fill: #1a1a1a !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Default text color for better contrast */
+        .mermaid text {
+            fill: #ffffff !important;
+        }
+        
+        /* Edge labels and arrows */
+        .mermaid .edgeLabel {
+            background-color: var(--bg-card) !important;
+            color: var(--neutral-white) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 4px !important;
+            padding: 2px 6px !important;
+        }
+        
+        .mermaid .arrowheadPath {
+            fill: var(--neutral-gray) !important;
+            stroke: var(--neutral-gray) !important;
+        }
+        
+@media (max-width: 1024px) {
+    .toc-fixed {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .toc-fixed.open {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .bento-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        height: auto;
+    }
+    
+    .bento-main {
+        grid-row: 1;
+    }
+
+    .mermaid-control-btn:not(.reset-zoom) {
+        display: none;
+    }
+    .mermaid-controls {
+        top: auto;
+        bottom: 15px;
+        right: 15px;
+    }
+}
+
+/* Responsive fixes for small screens */
+@media (max-width: 767px) {
+    body {
+        overflow-x: hidden;
+    }
+    
+    .hero-section {
+        padding: 1rem;
+    }
+    
+    .bento-grid {
+        gap: 1rem;
+    }
+    
+    .bento-main {
+        padding: 1.5rem;
+    }
+    
+    .bento-main h1 {
+        font-size: 2.5rem;
+    }
+    
+    .bento-side-1, .bento-side-2 {
+        padding: 1.5rem;
+    }
+    
+    .bento-main .flex {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .bento-main .flex > span {
+        width: auto;
+    }
+}
+
+/* Additional fixes for very small screens */
+@media (max-width: 480px) {
+    .bento-main h1 {
+        font-size: 2rem;
+    }
+    
+    .bento-side-1, .bento-side-2 {
+        padding: 1rem;
+    }
+}
+    </style>
+  <base target="_blank">
+</head>
+
+  <body>
+    <!-- Mobile TOC Toggle Button -->
+    <button id="toc-toggle" class="fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded-lg shadow-lg md:hidden">
+      <i class="fas fa-bars text-white"></i>
+    </button>
+    <!-- Table of Contents -->
+    <nav class="toc-fixed">
+      <div class="mb-8">
+        <h2 class="serif-font text-xl font-bold text-white mb-4">目录导航</h2>
+      </div>
+
+      <div class="space-y-2">
+        <a href="#overview" class="toc-link">系统概览</a>
+        <a href="#core-pages" class="toc-link">1. 核心页面</a>
+        <div class="ml-4 space-y-1">
+          <a href="#dashboard" class="toc-link text-sm">1.1 仪表盘主页</a>
+          <a href="#assessment" class="toc-link text-sm">1.2 自我评估中心</a>
+          <a href="#life-summary" class="toc-link text-sm">1.3 人生概括视图</a>
+        </div>
+        <a href="#tracking" class="toc-link">2. 状态记录模块</a>
+        <div class="ml-4 space-y-1">
+          <a href="#health-tracking" class="toc-link text-sm">2.1 健康状态追踪</a>
+          <a href="#mental-logging" class="toc-link text-sm">2.2 精神状态记录</a>
+          <a href="#financial-management" class="toc-link text-sm">2.3 经济状态管理</a>
+          <a href="#environmental" class="toc-link text-sm">2.4 环境因素记录</a>
+          <a href="#daily-log" class="toc-link text-sm">2.5 每日活动日志</a>
+        </div>
+        <a href="#goals" class="toc-link">3. 目标设定模块</a>
+        <div class="ml-4 space-y-1">
+          <a href="#life-goals" class="toc-link text-sm">3.1 人生目标设定</a>
+          <a href="#action-plans" class="toc-link text-sm">3.2 行动计划管理</a>
+        </div>
+        <a href="#analytics" class="toc-link">4. 统计分析模块</a>
+        <div class="ml-4 space-y-1">
+          <a href="#statistics" class="toc-link text-sm">4.1 综合统计分析</a>
+          <a href="#prediction" class="toc-link text-sm">4.2 未来趋势预测</a>
+        </div>
+        <a href="#system-config" class="toc-link">5. 系统配置模块</a>
+        <div class="ml-4 space-y-1">
+          <a href="#initialization" class="toc-link text-sm">5.1 初始化向导</a>
+          <a href="#settings" class="toc-link text-sm">5.2 系统设置</a>
+          <a href="#data-sync" class="toc-link text-sm">5.3 数据同步备份</a>
+        </div>
+        <a href="#implementation" class="toc-link">6. 实现框架模型</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Hero Section -->
+      <section class="hero-section px-8 py-12">
+        <div class="max-w-7xl mx-auto">
+          <div class="bento-grid">
+            <div class="bento-main">
+              <h1 class="serif-font text-5xl font-bold mb-6 leading-tight">
+                <span class="text-white">个人人生</span>
+                <br/>
+                <span class="text-blue-400">同步与评估系统</span>
+              </h1>
+              <p class="text-xl text-gray-300 mb-8 max-w-2xl">
+                通过Web端简洁、强交互、强可视化的方式，帮助您记录、同步、统计并评估个人从当前行为到整个人生的范畴。以黑蓝为主色调，辅以白黄，强调数据驱动的自我认知与成长。
+              </p>
+              <div class="flex flex-wrap gap-4">
+                <span class="px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium">
+                  <i class="fas fa-sync-alt mr-2"></i>实时同步
+                </span>
+                <span class="px-4 py-2 bg-yellow-500 text-black rounded-full text-sm font-medium">
+                  <i class="fas fa-chart-line mr-2"></i>数据驱动
+                </span>
+                <span class="px-4 py-2 bg-gray-700 text-white rounded-full text-sm font-medium">
+                  <i class="fas fa-shield-alt mr-2"></i>隐私保护
+                </span>
+              </div>
+            </div>
+
+            <div class="bento-side-1">
+              <div class="text-center">
+                <i class="fas fa-tachometer-alt text-4xl text-blue-400 mb-4"></i>
+                <h3 class="serif-font text-xl font-bold mb-2">仪表盘主页</h3>
+                <p class="text-gray-400 text-sm">全面、实时的人生状态概览</p>
+              </div>
+            </div>
+
+            <div class="bento-side-2">
+              <div class="text-center">
+                <i class="fas fa-brain text-4xl text-yellow-400 mb-4"></i>
+                <h3 class="serif-font text-xl font-bold mb-2">自我评估中心</h3>
+                <p class="text-gray-400 text-sm">深度量化评估与智能建议</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- System Overview -->
+      <section id="overview" class="px-8 py-12">
+        <div class="max-w-7xl mx-auto">
+          <h2 class="serif-font text-4xl font-bold mb-8 text-center">系统概览</h2>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <div class="page-card">
+              <div class="text-center">
+                <i class="fas fa-eye text-3xl text-blue-400 mb-4"></i>
+                <h3 class="serif-font text-xl font-bold mb-4">同步视角</h3>
+                <p class="text-gray-400">实时记录与分析个人状态，实现全方位自我认知</p>
+              </div>
+            </div>
+
+            <div class="page-card">
+              <div class="text-center">
+                <i class="fas fa-chart-bar text-3xl text-yellow-400 mb-4"></i>
+                <h3 class="serif-font text-xl font-bold mb-4">统计维度</h3>
+                <p class="text-gray-400">多维度数据分析，发现行为模式与内在关联</p>
+              </div>
+            </div>
+
+            <div class="page-card">
+              <div class="text-center">
+                <i class="fas fa-compass text-3xl text-blue-400 mb-4"></i>
+                <h3 class="serif-font text-xl font-bold mb-4">规划导向</h3>
+                <p class="text-gray-400">基于数据的智能建议，指导未来发展方向</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mermaid-container">
+            <div class="mermaid-controls">
+              <button class="mermaid-control-btn zoom-in" title="放大">
+                <i class="fas fa-search-plus"></i>
+              </button>
+              <button class="mermaid-control-btn zoom-out" title="缩小">
+                <i class="fas fa-search-minus"></i>
+              </button>
+              <button class="mermaid-control-btn reset-zoom" title="重置">
+                <i class="fas fa-expand-arrows-alt"></i>
+              </button>
+              <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                <i class="fas fa-expand"></i>
+              </button>
+            </div>
+            <div class="mermaid">
+              graph TB
+              A[&#34;个人人生同步系统&#34;] --&gt; B[&#34;状态记录模块&#34;]
+              A --&gt; C[&#34;目标设定模块&#34;]
+              A --&gt; D[&#34;统计分析模块&#34;]
+
+              B --&gt; B1[&#34;健康状态追踪&#34;]
+              B --&gt; B2[&#34;精神状态记录&#34;]
+              B --&gt; B3[&#34;经济状态管理&#34;]
+              B --&gt; B4[&#34;环境因素记录&#34;]
+              B --&gt; B5[&#34;每日活动日志&#34;]
+
+              C --&gt; C1[&#34;人生目标设定&#34;]
+              C --&gt; C2[&#34;行动计划管理&#34;]
+
+              D --&gt; D1[&#34;综合统计分析&#34;]
+              D --&gt; D2[&#34;未来趋势预测&#34;]
+
+              E[&#34;系统核心&#34;] --&gt; A
+              E --&gt; E1[&#34;仪表盘主页&#34;]
+              E --&gt; E2[&#34;自我评估中心&#34;]
+              E --&gt; E3[&#34;人生概括视图&#34;]
+
+              F[&#34;系统配置&#34;] --&gt; F1[&#34;初始化向导&#34;]
+              F --&gt; F2[&#34;系统设置&#34;]
+              F --&gt; F3[&#34;数据同步备份&#34;]
+
+              style A fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#ffffff
+              style E fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#ffffff
+              style F fill:#fbbf24,stroke:#d97706,stroke-width:2px,color:#1a1a1a
+              style B fill:#374151,stroke:#4b5563,stroke-width:1px,color:#ffffff
+              style C fill:#374151,stroke:#4b5563,stroke-width:1px,color:#ffffff
+              style D fill:#374151,stroke:#4b5563,stroke-width:1px,color:#ffffff
+
+              style B1 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#fbbf24
+              style B2 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#fbbf24
+              style B3 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#fbbf24
+              style B4 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#fbbf24
+              style B5 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#fbbf24
+
+              style C1 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#fbbf24
+              style C2 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#fbbf24
+
+              style D1 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#fbbf24
+              style D2 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#fbbf24
+
+              style E1 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#ffffff
+              style E2 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#ffffff
+              style E3 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#ffffff
+
+              style F1 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#ffffff
+              style F2 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#ffffff
+              style F3 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#ffffff
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Core Pages Section -->
+      <section id="core-pages" class="px-8 py-12">
+        <div class="max-w-7xl mx-auto">
+          <h2 class="serif-font text-4xl font-bold mb-12 text-center">1. 核心页面：仪表盘与自我评估</h2>
+
+          <!-- Dashboard Home -->
+          <div id="dashboard" class="mb-16">
+            <div class="page-card mb-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-tachometer-alt text-3xl text-blue-400 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">1.1 仪表盘主页 (Dashboard Home)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/cms.pixso.cn/c1e6db8fb4adecc63ea228801d03cbb9fe5df4d0.png" alt="现代化暗色主题数据管理仪表盘界面" class="w-full rounded-lg" size="large" aspect="wide" color="blue" style="photo" query="暗色主题数据仪表盘界面" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    主要参考 <a href="https://blog.csdn.net/gitblog_00574/article/details/142511515" class="citation">Black Dashboard</a> 的设计理念，采用暗色主题、宽敞的卡片式布局、清晰的字体和精美的图形。集成 <a href="https://app-generator.dev/docs/templates/bootstrap/black-dashboard.html" class="citation">Chart.js</a> 实现强大的数据可视化功能。
+                  </p>
+                  <p class="text-gray-300">
+                    融合金融仪表盘和项目管理仪表盘的设计元素，提供可自定义的仪表盘布局，允许用户拖拽和调整不同数据卡片的尺寸和位置。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">当前状态快照</h5>
+                      <p class="text-gray-400 text-sm">展示健康指数、精神状态、财务概览、目标进度等核心指标</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">数据可视化图表</h5>
+                      <p class="text-gray-400 text-sm">健康趋势图、收支分析图、情绪波动图等动态图表</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">快速记录入口</h5>
+                      <p class="text-gray-400 text-sm">一键记录心情、开销、运动等，减少操作成本</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">智能提醒通知</h5>
+                      <p class="text-gray-400 text-sm">目标截止提醒、数据更新提醒、行为洞察建议</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Self-Assessment Center -->
+          <div id="assessment" class="mb-16">
+            <div class="page-card mb-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-brain text-3xl text-yellow-400 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">1.2 自我评估中心 (Self-Assessment Center)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/i.redd.it/597fc6688e262910c4a322468b21b85ce9a94578.jpg" alt="暗色主题心理健康自测问卷界面" class="w-full rounded-lg" size="medium" aspect="wide" color="blue" style="photo" query="心理健康自测问卷界面" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    采用分步式（Wizard）设计，将复杂评估过程分解为多个逻辑清晰的步骤。集成情绪选择器、滑块组件等交互元素，增强可视化效果。
+                  </p>
+                  <p class="text-gray-300">
+                    评估结果展示采用仪表盘和进度条，结合高亮卡片呈现智能建议，打造专业且富有启发性的体验。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-yellow-300">多维度评估问卷</h5>
+                      <p class="text-gray-400 text-sm">身体健康、心理状态、认知能力、职业能力、人际关系、财务状况</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-yellow-300">自定义评估</h5>
+                      <p class="text-gray-400 text-sm">支持用户创建个性化评估问卷，适应特定需求</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-yellow-300">定期追踪分析</h5>
+                      <p class="text-gray-400 text-sm">生成个人成长轨迹图，展示各维度变化趋势</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-yellow-300">智能建议生成</h5>
+                      <p class="text-gray-400 text-sm">基于多维度关联分析，提供个性化行动建议</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Life Summary View -->
+          <div id="life-summary" class="mb-16">
+            <div class="page-card">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-book-open text-3xl text-blue-400 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">1.3 人生概括视图 (Life Summary View)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/i-blog.csdnimg.cn/1a5cab86116eea71402ee333d6fd623281e203aa.png" alt="个人年度总结报告数据可视化界面" class="w-full rounded-lg" size="large" aspect="wide" query="个人年度报告界面设计" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    采用时间轴和里程碑形式组织内容，参考 <a href="https://blog.csdn.net/gitblog_00071/article/details/137493108" class="citation">CherryDiary</a> 等日记应用的设计理念。引入人生雷达图、词云等创意可视化形式。
+                  </p>
+                  <p class="text-gray-300">
+                    运用金色、绿色等富有情感的点缀色彩，增强叙事性和个人色彩，打造数字传记般的体验。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">人生时间轴</h5>
+                      <p class="text-gray-400 text-sm">整合健康里程碑、职业成就、财务节点、个人成长等重要事件</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">人生雷达图</h5>
+                      <p class="text-gray-400 text-sm">多维度评估生成动态人生画像，展示人生平衡度</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">年度总结报告</h5>
+                      <p class="text-gray-400 text-sm">自动生成包含关键数据、高光时刻、成长轨迹的精美报告</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">&#34;如果&#34;模拟器</h5>
+                      <p class="text-gray-400 text-sm">设定假设性场景，预测不同选择可能带来的结果</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Tracking Module -->
+      <section id="tracking" class="px-8 py-12">
+        <div class="max-w-7xl mx-auto">
+          <h2 class="serif-font text-4xl font-bold mb-12 text-center">2. 状态记录与同步模块</h2>
+
+          <!-- Health Tracking -->
+          <div id="health-tracking" class="mb-16">
+            <div class="page-card mb-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-heartbeat text-3xl text-red-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">2.1 健康状态追踪 (Health Tracking)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/img.pconline.com.cn/04876f775418de83454e188e07dd38a878a8b583.jpg" alt="暗色主题健康追踪应用界面，展示身体指标数据" class="w-full rounded-lg" size="medium" aspect="wide" color="blue" style="photo" query="暗色主题健康追踪应用界面" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    采用卡片式设计，每类健康数据独立展示。集成 <a href="https://app-generator.dev/docs/templates/bootstrap/black-dashboard.html" class="citation">Chart.js</a> 实现数据可视化，使用颜色编码区分健康状态。
+                  </p>
+                  <p class="text-gray-300">
+                    设计直观的交互组件，如睡眠周期记录器、饮食搜索框，提升记录效率和用户体验。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-red-300">多维度数据记录</h5>
+                      <p class="text-gray-400 text-sm">基础体征、运动数据、睡眠质量、饮食记录、症状追踪</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-red-300">数据可视化分析</h5>
+                      <p class="text-gray-400 text-sm">趋势图、分布图、周期图，发现数据模式和异常</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-red-300">目标设定追踪</h5>
+                      <p class="text-gray-400 text-sm">健康目标设定、进度追踪、成就徽章系统</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-red-300">智能提醒洞察</h5>
+                      <p class="text-gray-400 text-sm">记录提醒、行为洞察、健康预警</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mental State Logging -->
+          <div id="mental-logging" class="mb-16">
+            <div class="page-card mb-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-brain text-3xl text-purple-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">2.2 精神状态记录 (Mental State Logging)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/www.43848.com/50134038052b87986b095e3213197cbf694c2eb6.jpeg" alt="暗色主题冥想应用界面" class="w-full rounded-lg" size="medium" aspect="wide" color="purple" style="photo" query="冥想应用界面" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    营造私密、安全、温和的氛围，采用日记形式的设计。参考 <a href="https://blog.csdn.net/gitblog_00071/article/details/137493108" class="citation">CherryDiary</a> 的文本编辑器设计，支持Markdown语法。
+                  </p>
+                  <p class="text-gray-300">
+                    引入情绪选择器、压力滑块等交互组件，降低记录心理门槛，让记录成为一种轻松习惯。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-purple-300">多模式记录</h5>
+                      <p class="text-gray-400 text-sm">快速情绪打卡、详细日记、压力评估、思维记录</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-purple-300">情绪关联分析</h5>
+                      <p class="text-gray-400 text-sm">分析情绪与活动、睡眠、人际关系的相关性</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-purple-300">趋势周期分析</h5>
+                      <p class="text-gray-400 text-sm">识别情绪变化的长期趋势和周期性规律</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-purple-300">隐私安全保障</h5>
+                      <p class="text-gray-400 text-sm">端到端加密、密码保护、生物识别登录</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Financial Management -->
+          <div id="financial-management" class="mb-16">
+            <div class="page-card mb-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-chart-line text-3xl text-green-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">2.3 经济状态管理 (Financial Status Management)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://fixedplaceholder" alt="暗色主题个人理财管理界面" class="w-full rounded-lg" size="large" aspect="wide" color="green" style="photo" query="个人理财管理界面" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    采用专业的金融仪表盘设计，顶部展示关键财务指标。运用饼图、柱状图、折线图等多种图表展示资产分布、收支情况和趋势变化。
+                  </p>
+                  <p class="text-gray-300">
+                    设计高效的收支记录表单，支持快速分类、图片上传，确保记录过程简洁高效。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-green-300">全面账户管理</h5>
+                      <p class="text-gray-400 text-sm">多账户支持、详细收支记录、转账管理、周期性交易</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-green-300">智能预算目标</h5>
+                      <p class="text-gray-400 text-sm">分类预算、超支预警、储蓄目标、长期财务规划</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-green-300">深度财务分析</h5>
+                      <p class="text-gray-400 text-sm">收支分析、资产负债分析、现金流分析、趋势分析</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-green-300">数据安全保障</h5>
+                      <p class="text-gray-400 text-sm">数据加密、云端同步、多设备备份</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Environmental Factors -->
+          <div id="environmental" class="mb-16">
+            <div class="page-card mb-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-globe text-3xl text-cyan-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">2.4 环境因素记录 (Environmental Factors)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/image.woshipm.com/1211a47ef2aef7e3eb20fd4b013b4ffb64eabb15.jpeg" alt="暗色主题环境数据追踪界面" class="w-full rounded-lg" size="medium" aspect="wide" color="blue" style="photo" query="环境数据追踪界面设计" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    模块化布局组织不同类型的环境信息，采用卡片式设计。集成天气API自动获取环境数据，简化记录流程。
+                  </p>
+                  <p class="text-gray-300">
+                    创新的人际关系图谱可视化，使用节点和连线展示社交关系质量，鼓励关联性思考。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-cyan-300">多维度记录</h5>
+                      <p class="text-gray-400 text-sm">物理环境、社交互动、工作状态、其他影响因素</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-cyan-300">环境关联分析</h5>
+                      <p class="text-gray-400 text-sm">分析环境与情绪、生产力、健康的相关性</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-cyan-300">环境优化建议</h5>
+                      <p class="text-gray-400 text-sm">基于分析结果提供行为、环境、社交策略建议</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-cyan-300">模式识别</h5>
+                      <p class="text-gray-400 text-sm">识别不同环境下的行为模式，帮助用户深入了解自己</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Daily Activity Log -->
+          <div id="daily-log" class="mb-16">
+            <div class="page-card">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-list-alt text-3xl text-indigo-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">2.5 每日活动日志 (Daily Activity Log)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/image.woshipm.com/3a7272995de40fbf92ed87021c7410064eea927e.png" alt="暗色主题时间轴界面设计" class="w-full rounded-lg" size="medium" aspect="wide" color="blue" style="photo" query="时间轴界面设计" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    采用时间轴或列表形式展示一天活动，参考 <a href="https://blog.csdn.net/gitblog_00071/article/details/137493108" class="citation">CherryDiary</a> 的简洁设计理念。提供工具栏快速添加时间戳、标签、位置等信息。
+                  </p>
+                  <p class="text-gray-300">
+                    创新嵌入式记录功能，实现活动记录与状态反馈的无缝衔接。引入模板功能，提高重复性活动的记录效率。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-indigo-300">灵活记录方式</h5>
+                      <p class="text-gray-400 text-sm">自由文本、结构化记录、快速模板、多媒体附件</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-indigo-300">即时状态关联</h5>
+                      <p class="text-gray-400 text-sm">活动后立即进行情绪、精力反馈，高质量数据匹配</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-indigo-300">时间利用分析</h5>
+                      <p class="text-gray-400 text-sm">时间分配饼图、活动频率统计、时间轴展示</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-indigo-300">活动结果关联</h5>
+                      <p class="text-gray-400 text-sm">分析活动模式与情绪、生产力、健康的关系</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Goals Module -->
+      <section id="goals" class="px-8 py-12">
+        <div class="max-w-7xl mx-auto">
+          <h2 class="serif-font text-4xl font-bold mb-12 text-center">3. 目标设定与人生规划模块</h2>
+
+          <!-- Life Goal Setting -->
+          <div id="life-goals" class="mb-16">
+            <div class="page-card mb-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-bullseye text-3xl text-orange-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">3.1 人生目标设定 (Life Goal Setting)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/image.woshipm.com/3a7272995de40fbf92ed87021c7410064eea927e.png" alt="暗色主题目标设定界面" class="w-full rounded-lg" size="medium" aspect="wide" color="blue" style="photo" query="目标设定界面设计" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    采用看板或列表形式展示目标，使用目标分解视图展现层级关系。运用颜色编码区分目标状态，增加仪式感动画效果。
+                  </p>
+                  <p class="text-gray-300">
+                    引入OKR管理理念，为每个目标设定3-5个关键结果，提供清晰的成功衡量标准。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-orange-300">多维度目标设定</h5>
+                      <p class="text-gray-400 text-sm">健康、财务、职业、个人成长、人际关系五大维度</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-orange-300">目标分解关键结果</h5>
+                      <p class="text-gray-400 text-sm">借鉴OKR方法，将宏大目标分解为可衡量的关键结果</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-orange-300">目标关联依赖</h5>
+                      <p class="text-gray-400 text-sm">建立目标之间的关联关系和依赖关系，确保行动一致性</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-orange-300">进度追踪可视化</h5>
+                      <p class="text-gray-400 text-sm">实时追踪目标进度，生成直观的进度报告</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Plans -->
+          <div id="action-plans" class="mb-16">
+            <div class="page-card">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-tasks text-3xl text-blue-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">3.2 行动计划与任务管理 (Action Plan &amp; Task Management)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/i-blog.csdnimg.cn/28c930fb46ed8759f7d474ab1e1e249791b70dfa.png" alt="暗色主题任务管理界面" class="w-full rounded-lg" size="medium" aspect="wide" style="photo" query="任务管理界面设计" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    提供列表和看板两种视图模式，支持拖拽调整任务状态。设计简洁的任务项展示，包含标题、截止日、优先级等关键信息。
+                  </p>
+                  <p class="text-gray-300">
+                    集成日历视图，直观展示任务时间安排。支持子任务、标签、附件等功能，增强任务的可操作性。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">任务创建组织</h5>
+                      <p class="text-gray-400 text-sm">标题、截止日、优先级、所属目标、标签分类</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">多视图管理</h5>
+                      <p class="text-gray-400 text-sm">列表视图、看板视图、日历视图，满足不同管理需求</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">智能提醒通知</h5>
+                      <p class="text-gray-400 text-sm">自定义提醒方式和时间，支持循环任务提醒</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">目标进度联动</h5>
+                      <p class="text-gray-400 text-sm">任务完成自动更新目标进度，提供持续成就感</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Analytics Module -->
+      <section id="analytics" class="px-8 py-12">
+        <div class="max-w-7xl mx-auto">
+          <h2 class="serif-font text-4xl font-bold mb-12 text-center">4. 统计分析与预测模块</h2>
+
+          <!-- Comprehensive Statistics -->
+          <div id="statistics" class="mb-16">
+            <div class="page-card mb-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-chart-bar text-3xl text-green-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">4.1 综合统计分析 (Comprehensive Statistics)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/cms.pixso.cn/8d1c8adb1f3c89ad3cce84a0e4fceba45b6aada8.png" alt="暗色主题数据分析仪表盘界面" class="w-full rounded-lg" size="large" aspect="wide" color="blue" style="photo" query="数据分析仪表盘界面" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    以数据可视化为核心，采用仪表盘布局。提供全局筛选控件，支持多图表组合展示。每个图表都可交互，如缩放、筛选、详情查看。
+                  </p>
+                  <p class="text-gray-300">
+                    提供图表库供用户自定义选择，支持数据故事功能，自动生成数据解读，帮助用户理解数据含义。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-green-300">多维度数据聚合</h5>
+                      <p class="text-gray-400 text-sm">整合健康、精神、财务、活动、环境等多模块数据</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-green-300">丰富统计图表</h5>
+                      <p class="text-gray-400 text-sm">趋势、构成、对比、分布、相关性等多种分析图表</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-green-300">深度关联分析</h5>
+                      <p class="text-gray-400 text-sm">自动计算不同数据维度的相关系数，发现深层联系</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-green-300">周期性模式识别</h5>
+                      <p class="text-gray-400 text-sm">识别数据中的周期性规律，帮助用户提前预知状态变化</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Future Prediction -->
+          <div id="prediction" class="mb-16">
+            <div class="page-card">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-crystal-ball text-3xl text-purple-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">4.2 未来趋势预测 (Future Trend Prediction)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/img30.360buyimg.com/f82c937899a0723cad039b7655c3bd3aa0108c31.png" alt="暗色主题数据预测界面" class="w-full rounded-lg" size="medium" aspect="wide" color="blue" style="photo" query="数据预测界面" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    采用时间轴形式展示历史和预测数据，使用虚线或半透明色块表示预测部分，附带置信区间显示不确定性。
+                  </p>
+                  <p class="text-gray-300">
+                    设计预测模拟器，允许用户调整变量实时查看结果变化。强调预测的概率性，鼓励用户通过改变当下行为塑造未来。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-purple-300">时间序列趋势外推</h5>
+                      <p class="text-gray-400 text-sm">使用ARIMA、指数平滑等模型预测未来数值</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-purple-300">行为模式预测</h5>
+                      <p class="text-gray-400 text-sm">基于历史行为模式预测未来行为，帮助规划时间</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-purple-300">目标达成概率预测</h5>
+                      <p class="text-gray-400 text-sm">预测目标实现概率，低概率时发出预警</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-purple-300">情景模拟分析</h5>
+                      <p class="text-gray-400 text-sm">设定假设情景，计算可能结果，支持复杂预测模型</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- System Configuration Module -->
+      <section id="system-config" class="px-8 py-12">
+        <div class="max-w-7xl mx-auto">
+          <h2 class="serif-font text-4xl font-bold mb-12 text-center">5. 系统初始化与配置模块</h2>
+
+          <!-- Initialization Wizard -->
+          <div id="initialization" class="mb-16">
+            <div class="page-card mb-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-magic text-3xl text-yellow-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">5.1 初始化向导 (Initialization Wizard)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/i-blog.csdnimg.cn/eb54f3044a0a52c10df3dffb9e18aa9f6dec9abc.png" alt="暗色主题的用户引导设置界面" class="w-full rounded-lg" size="medium" aspect="wide" color="blue" style="photo" query="用户引导设置界面" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    采用分步式向导界面，将整个初始化过程分解为简单步骤。使用明亮、欢迎的色彩，搭配插图或动画增强趣味性。
+                  </p>
+                  <p class="text-gray-300">
+                    在评估和目标设定步骤提供可视化图标和预设模板，降低用户认知负担，在轻松氛围中完成初始化。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-yellow-300">欢迎介绍</h5>
+                      <p class="text-gray-400 text-sm">介绍系统核心理念和功能，展示&#34;同步人生&#34;概念</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-yellow-300">基本信息收集</h5>
+                      <p class="text-gray-400 text-sm">收集姓名、出生日期、性别等基础信息</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-yellow-300">初始状态评估</h5>
+                      <p class="text-gray-400 text-sm">完成简版自我评估，建立初始&#34;人生快照&#34;</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-yellow-300">初步目标设定</h5>
+                      <p class="text-gray-400 text-sm">基于评估结果推荐目标，支持完全自定义</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- System Settings -->
+          <div id="settings" class="mb-16">
+            <div class="page-card mb-8">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-cog text-3xl text-gray-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">5.2 系统设置 (System Settings)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/i-blog.csdnimg.cn/0157b9050d53a2ca028582d09f41063c046f1465.png" alt="暗色主题系统设置界面" class="w-full rounded-lg" size="medium" aspect="wide" style="photo" query="系统设置界面设计" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    遵循通用设置界面设计规范，采用清晰的分组形式展示设置选项。使用标准控件如开关、下拉菜单、单选按钮等。
+                  </p>
+                  <p class="text-gray-300">
+                    为每个设置项提供简短说明，确保用户理解设置作用。保持系统简洁风格，避免不必要的装饰元素。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-gray-300">账户管理</h5>
+                      <p class="text-gray-400 text-sm">修改密码、第三方登录、个人头像昵称设置</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-gray-300">通知提醒设置</h5>
+                      <p class="text-gray-400 text-sm">自定义各类通知开关和接收方式</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-gray-300">数据隐私安全</h5>
+                      <p class="text-gray-400 text-sm">数据导出密码、API权限管理、隐私政策查看</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-gray-300">界面显示设置</h5>
+                      <p class="text-gray-400 text-sm">主题切换、默认模块、日期格式、语言选择</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Sync &amp; Backup -->
+          <div id="data-sync" class="mb-16">
+            <div class="page-card">
+              <div class="flex items-center mb-6">
+                <i class="fas fa-sync-alt text-3xl text-blue-500 mr-4"></i>
+                <h3 class="serif-font text-2xl font-bold">5.3 数据同步与备份 (Data Sync &amp; Backup)</h3>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-blue-400">UI设计参考</h4>
+                  <div class="bg-gray-900 p-6 rounded-lg mb-4">
+                    <img src="https://kimi-web-img.moonshot.cn/img/files.getquicker.net/a17d5dc131893124a454e8bb2e8a2683abf6e25b.png" alt="暗色主题数据同步与备份界面" class="w-full rounded-lg" size="medium" aspect="wide" color="blue" style="photo" query="数据同步备份界面" referrerpolicy="no-referrer" data-modified="1" data-score="0.00"/>
+                  </div>
+                  <p class="text-gray-300 mb-4">
+                    清晰展示当前同步状态和备份信息，提供立即同步、备份、恢复等操作按钮。强调安全性和可靠性设计。
+                  </p>
+                  <p class="text-gray-300">
+                    提供多种数据导出格式选项，设计谨慎的数据恢复确认流程，防止误操作导致数据丢失。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="text-xl font-semibold mb-4 text-yellow-400">功能说明</h4>
+                  <div class="space-y-4">
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">自动云端同步</h5>
+                      <p class="text-gray-400 text-sm">实时同步数据到云端服务器，多设备无缝访问</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">手动数据备份</h5>
+                      <p class="text-gray-400 text-sm">随时手动创建完整数据备份，云端存储管理</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">数据恢复导入</h5>
+                      <p class="text-gray-400 text-sm">从云端备份恢复数据，支持标准格式数据导入</p>
+                    </div>
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                      <h5 class="font-semibold mb-2 text-blue-300">数据导出</h5>
+                      <p class="text-gray-400 text-sm">支持CSV、JSON、PDF等多种格式数据导出</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Implementation Framework -->
+      <section id="implementation" class="px-8 py-12">
+        <div class="max-w-7xl mx-auto">
+          <h2 class="serif-font text-4xl font-bold mb-12 text-center">6. 实现框架模型</h2>
+
+          <div class="page-card mb-8">
+            <div class="flex items-center mb-6">
+              <i class="fas fa-sitemap text-3xl text-blue-500 mr-4"></i>
+              <h3 class="serif-font text-2xl font-bold">系统架构模型</h3>
+            </div>
+
+            <div class="mermaid-container mb-8">
+              <div class="mermaid-controls">
+                <button class="mermaid-control-btn zoom-in" title="放大">
+                  <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="mermaid-control-btn zoom-out" title="缩小">
+                  <i class="fas fa-search-minus"></i>
+                </button>
+                <button class="mermaid-control-btn reset-zoom" title="重置">
+                  <i class="fas fa-expand-arrows-alt"></i>
+                </button>
+                <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                  <i class="fas fa-expand"></i>
+                </button>
+              </div>
+              <div class="mermaid">
+                graph TD
+                A[&#34;用户输入层&#34;] --&gt; B[&#34;数据处理层&#34;]
+                B --&gt; C[&#34;分析引擎层&#34;]
+                C --&gt; D[&#34;可视化层&#34;]
+                D --&gt; E[&#34;用户输出层&#34;]
+
+                A1[&#34;活动日志&#34;] --&gt; A
+                A2[&#34;健康记录&#34;] --&gt; A
+                A3[&#34;财务记录&#34;] --&gt; A
+                A4[&#34;精神状态&#34;] --&gt; A
+                A5[&#34;环境因素&#34;] --&gt; A
+
+                B --&gt; B1[&#34;数据清洗&#34;]
+                B --&gt; B2[&#34;数据标准化&#34;]
+                B --&gt; B3[&#34;数据存储&#34;]
+
+                C --&gt; C1[&#34;关联分析&#34;]
+                C --&gt; C2[&#34;趋势分析&#34;]
+                C --&gt; C3[&#34;预测模型&#34;]
+                C --&gt; C4[&#34;模式识别&#34;]
+
+                D --&gt; D1[&#34;图表生成&#34;]
+                D --&gt; D2[&#34;仪表盘构建&#34;]
+                D --&gt; D3[&#34;报告生成&#34;]
+
+                E --&gt; E1[&#34;可视化展示&#34;]
+                E --&gt; E2[&#34;智能建议&#34;]
+                E --&gt; E3[&#34;预警通知&#34;]
+                E --&gt; E4[&#34;目标追踪&#34;]
+
+                F[&#34;同步机制&#34;] --&gt; A
+                F --&gt; B
+                F --&gt; C
+                F --&gt; D
+                F --&gt; E
+
+                G[&#34;隐私保护&#34;] --&gt; A
+                G --&gt; B
+                G --&gt; C
+                G --&gt; D
+                G --&gt; E
+
+                style A fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#ffffff
+                style B fill:#1f2937,stroke:#374151,stroke-width:2px,color:#ffffff
+                style C fill:#fbbf24,stroke:#d97706,stroke-width:2px,color:#1a1a1a
+                style D fill:#1f2937,stroke:#374151,stroke-width:2px,color:#ffffff
+                style E fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#ffffff
+                style F fill:#10b981,stroke:#059669,stroke-width:2px,color:#ffffff
+                style G fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#ffffff
+
+                style A1 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#ffffff
+                style A2 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#ffffff
+                style A3 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#ffffff
+                style A4 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#ffffff
+                style A5 fill:#1f2937,stroke:#374151,stroke-width:1px,color:#ffffff
+
+                style B1 fill:#111827,stroke:#1f2937,stroke-width:1px,color:#ffffff
+                style B2 fill:#111827,stroke:#1f2937,stroke-width:1px,color:#ffffff
+                style B3 fill:#111827,stroke:#1f2937,stroke-width:1px,color:#ffffff
+
+                style C1 fill:#f59e0b,stroke:#d97706,stroke-width:1px,color:#1a1a1a
+                style C2 fill:#f59e0b,stroke:#d97706,stroke-width:1px,color:#1a1a1a
+                style C3 fill:#f59e0b,stroke:#d97706,stroke-width:1px,color:#1a1a1a
+                style C4 fill:#f59e0b,stroke:#d97706,stroke-width:1px,color:#1a1a1a
+
+                style D1 fill:#111827,stroke:#1f2937,stroke-width:1px,color:#ffffff
+                style D2 fill:#111827,stroke:#1f2937,stroke-width:1px,color:#ffffff
+                style D3 fill:#111827,stroke:#1f2937,stroke-width:1px,color:#ffffff
+
+                style E1 fill:#2563eb,stroke:#1e40af,stroke-width:1px,color:#ffffff
+                style E2 fill:#2563eb,stroke:#1e40af,stroke-width:1px,color:#ffffff
+                style E3 fill:#2563eb,stroke:#1e40af,stroke-width:1px,color:#ffffff
+                style E4 fill:#2563eb,stroke:#1e40af,stroke-width:1px,color:#ffffff
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div class="bg-gray-900 p-6 rounded-lg">
+                <h4 class="text-xl font-semibold mb-4 text-blue-400">数据同步机制</h4>
+                <div class="space-y-3">
+                  <div class="flex items-center">
+                    <i class="fas fa-user-edit text-blue-400 mr-3"></i>
+                    <span class="text-gray-300">用户主动输入模式</span>
+                  </div>
+                  <div class="flex items-center">
+                    <i class="fas fa-clock text-blue-400 mr-3"></i>
+                    <span class="text-gray-300">定时回顾机制</span>
+                  </div>
+                  <div class="flex items-center">
+                    <i class="fas fa-bell text-blue-400 mr-3"></i>
+                    <span class="text-gray-300">智能提醒系统</span>
+                  </div>
+                  <div class="flex items-center">
+                    <i class="fas fa-mobile-alt text-blue-400 mr-3"></i>
+                    <span class="text-gray-300">多设备实时同步</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gray-900 p-6 rounded-lg">
+                <h4 class="text-xl font-semibold mb-4 text-yellow-400">核心算法模型</h4>
+                <div class="space-y-3">
+                  <div class="flex items-center">
+                    <i class="fas fa-brain text-yellow-400 mr-3"></i>
+                    <span class="text-gray-300">行为-状态关联分析</span>
+                  </div>
+                  <div class="flex items-center">
+                    <i class="fas fa-chart-line text-yellow-400 mr-3"></i>
+                    <span class="text-gray-300">时间序列预测模型</span>
+                  </div>
+                  <div class="flex items-center">
+                    <i class="fas fa-network-wired text-yellow-400 mr-3"></i>
+                    <span class="text-gray-300">多维度数据关联挖掘</span>
+                  </div>
+                  <div class="flex items-center">
+                    <i class="fas fa-lightbulb text-yellow-400 mr-3"></i>
+                    <span class="text-gray-300">智能建议生成引擎</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-gray-900 p-6 rounded-lg mt-8">
+              <h4 class="text-xl font-semibold mb-4 text-green-400">隐私保护设计</h4>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-center">
+                  <i class="fas fa-lock text-3xl text-green-400 mb-3"></i>
+                  <h5 class="font-semibold mb-2">端到端加密</h5>
+                  <p class="text-gray-400 text-sm">所有数据传输和存储均采用端到端加密</p>
+                </div>
+                <div class="text-center">
+                  <i class="fas fa-user-shield text-3xl text-green-400 mb-3"></i>
+                  <h5 class="font-semibold mb-2">本地优先</h5>
+                  <p class="text-gray-400 text-sm">数据默认存储在本地，用户完全控制数据访问</p>
+                </div>
+                <div class="text-center">
+                  <i class="fas fa-fingerprint text-3xl text-green-400 mb-3"></i>
+                  <h5 class="font-semibold mb-2">生物识别</h5>
+                  <p class="text-gray-400 text-sm">支持生物识别技术保护敏感数据访问</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-12 text-center">
+            <p class="text-gray-400 italic">
+              &#34;同步&#34;不是简单的数据记录，而是通过深度分析、智能预测和精准建议，帮助用户实现人生各个维度的和谐统一与持续成长。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="bg-gray-900 border-t border-gray-700 px-8 py-12">
+        <div class="max-w-7xl mx-auto text-center">
+          <p class="text-gray-400 mb-4">
+            本系统旨在帮助用户实现数据驱动的人生管理，通过科学的方法实现自我认知和持续成长。
+          </p>
+          <div class="flex justify-center space-x-8 text-sm text-gray-500">
+            <span>UI设计参考: <a href="https://blog.csdn.net/gitblog_00574/article/details/142511515" class="citation">Black Dashboard</a></span>
+            <span>可视化库: <a href="https://app-generator.dev/docs/templates/bootstrap/black-dashboard.html" class="citation">Chart.js</a></span>
+            <span>设计灵感: <a href="https://blog.csdn.net/gitblog_00071/article/details/137493108" class="citation">CherryDiary</a></span>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+        // Initialize Mermaid
+        document.addEventListener('DOMContentLoaded', function() {
+            mermaid.initialize({ 
+                startOnLoad: true,
+                theme: 'dark',
+                themeVariables: {
+                    primaryColor: '#3b82f6',
+                    primaryTextColor: '#ffffff',
+                    primaryBorderColor: '#1e40af',
+                    lineColor: '#6b7280',
+                    secondaryColor: '#fbbf24',
+                    tertiaryColor: '#1f2937',
+                    background: '#0f0f0f',
+                    mainBkg: '#1f2937',
+                    secondBkg: '#374151',
+                    tertiaryBkg: '#111827',
+                    // Enhanced contrast settings
+                    nodeBkg: '#1f2937',
+                    nodeTextColor: '#ffffff',
+                    clusterBkg: '#111827',
+                    clusterTextColor: '#ffffff',
+                    defaultLinkColor: '#6b7280',
+                    titleColor: '#ffffff',
+                    edgeLabelBackground: '#1f2937',
+                    // Ensure good contrast for different node types
+                    cScale0: '#3b82f6',
+                    cScale1: '#fbbf24',
+                    cScale2: '#10b981',
+                    cScale3: '#ef4444',
+                    cScale4: '#8b5cf6',
+                    cScale5: '#ec4899',
+                    cScale6: '#06b6d4',
+                    cScale7: '#f97316'
+                },
+                flowchart: {
+                    useMaxWidth: false,
+                    htmlLabels: true,
+                    curve: 'basis',
+                    padding: 20
+                },
+                graph: {
+                    useMaxWidth: false,
+                    htmlLabels: true
+                },
+                sequence: {
+                    useMaxWidth: false,
+                    padding: 20
+                },
+                gantt: {
+                    useMaxWidth: false,
+                    padding: 20
+                }
+            });
+
+            // Initialize Mermaid Controls for zoom and pan
+            initializeMermaidControls();
+        });
+
+        // Function to initialize mermaid controls (zoom and pan)
+        function initializeMermaidControls() {
+            const containers = document.querySelectorAll('.mermaid-container');
+
+            containers.forEach(container => {
+            const mermaidElement = container.querySelector('.mermaid');
+            let scale = 1;
+            let isDragging = false;
+            let startX, startY, translateX = 0, translateY = 0;
+
+            // 触摸相关状态
+            let isTouch = false;
+            let touchStartTime = 0;
+            let initialDistance = 0;
+            let initialScale = 1;
+            let isPinching = false;
+
+            // Zoom controls
+            const zoomInBtn = container.querySelector('.zoom-in');
+            const zoomOutBtn = container.querySelector('.zoom-out');
+            const resetBtn = container.querySelector('.reset-zoom');
+            const fullscreenBtn = container.querySelector('.fullscreen');
+
+            function updateTransform() {
+                mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+                if (scale > 1) {
+                container.classList.add('zoomed');
+                } else {
+                container.classList.remove('zoomed');
+                }
+
+                mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+            }
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                scale = Math.min(scale * 1.25, 4);
+                updateTransform();
+                });
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                scale = Math.max(scale / 1.25, 0.3);
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+                updateTransform();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+                });
+            }
+
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                });
+            }
+
+            // Mouse Events
+            mermaidElement.addEventListener('mousedown', (e) => {
+                if (isTouch) return; // 如果是触摸设备，忽略鼠标事件
+
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                mermaidElement.style.cursor = 'grabbing';
+                updateTransform();
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isTouch) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            // 获取两点之间的距离
+            function getTouchDistance(touch1, touch2) {
+                return Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+                );
+            }
+
+            // Touch Events - 触摸事件处理
+            mermaidElement.addEventListener('touchstart', (e) => {
+                isTouch = true;
+                touchStartTime = Date.now();
+
+                if (e.touches.length === 1) {
+                // 单指拖动
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+
+                } else if (e.touches.length === 2) {
+                // 双指缩放
+                isPinching = true;
+                isDragging = false;
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = getTouchDistance(touch1, touch2);
+                initialScale = scale;
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging && !isPinching) {
+                // 单指拖动
+                const touch = e.touches[0];
+                translateX = touch.clientX - startX;
+                translateY = touch.clientY - startY;
+                updateTransform();
+
+                } else if (e.touches.length === 2 && isPinching) {
+                // 双指缩放
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = getTouchDistance(touch1, touch2);
+
+                if (initialDistance > 0) {
+                    const newScale = Math.min(Math.max(
+                    initialScale * (currentDistance / initialDistance),
+                    0.3
+                    ), 4);
+                    scale = newScale;
+                    updateTransform();
+                }
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchend', (e) => {
+                // 重置状态
+                if (e.touches.length === 0) {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                // 延迟重置isTouch，避免鼠标事件立即触发
+                setTimeout(() => {
+                    isTouch = false;
+                }, 100);
+                } else if (e.touches.length === 1 && isPinching) {
+                // 从双指变为单指，切换为拖动模式
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+                }
+
+                updateTransform();
+            });
+
+            mermaidElement.addEventListener('touchcancel', (e) => {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                setTimeout(() => {
+                isTouch = false;
+                }, 100);
+
+                updateTransform();
+            });
+
+            // Enhanced wheel zoom with better center point handling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+                // Adjust translation to zoom towards center
+                if (newScale !== scale) {
+                const scaleDiff = newScale / scale;
+                translateX = translateX * scaleDiff;
+                translateY = translateY * scaleDiff;
+                scale = newScale;
+
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+
+                updateTransform();
+                }
+            });
+
+            // Initialize display
+            updateTransform();
+            });
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Active TOC link highlighting
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section[id]');
+            const tocLinks = document.querySelectorAll('.toc-link');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Mobile TOC toggle
+        const tocToggle = document.getElementById('toc-toggle');
+        const tocFixed = document.querySelector('.toc-fixed');
+        
+        tocToggle.addEventListener('click', function() {
+            tocFixed.classList.toggle('open');
+        });
+
+        // Close TOC when clicking outside
+        document.addEventListener('click', function(event) {
+            if (tocFixed.classList.contains('open') && 
+                !tocFixed.contains(event.target) && 
+                event.target !== tocToggle) {
+                tocFixed.classList.remove('open');
+            }
+        });
+    </script>
+  
+
+</body></html>
