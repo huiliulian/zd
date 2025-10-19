@@ -1,1615 +1,1595 @@
+
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>个人人生同步系统：实现逻辑与模型架构重构</title>
-		<script src="https://cdn.tailwindcss.com"></script>
-		<link
-			href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
-			rel="stylesheet">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-		<script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
-		<style>
-			:root {
-				--sage-green: #9CAF88;
-				--warm-beige: #F5F1E8;
-				--deep-charcoal: #2D3436;
-				--soft-gray: #E8E6E1;
-				--accent-blue: #6B7D8C;
-			}
-
-			body {
-				font-family: 'Inter', sans-serif;
-				background: linear-gradient(135deg, var(--warm-beige) 0%, #FAFAFA 100%);
-				color: var(--deep-charcoal);
-				overflow-x: hidden;
-			}
-
-			img {
-				max-width: 100%;
-				height: auto;
-			}
-
-			.serif-heading {
-				font-family: 'Noto Serif SC', serif;
-			}
-
-			.hero-gradient {
-				background: linear-gradient(135deg,
-						rgba(156, 175, 136, 0.9) 0%,
-						rgba(107, 125, 140, 0.8) 50%,
-						rgba(45, 52, 54, 0.9) 100%);
-			}
-
-			.toc-fixed {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 280px;
-				height: 100vh;
-				background: rgba(255, 255, 255, 0.95);
-				backdrop-filter: blur(10px);
-				border-right: 1px solid var(--soft-gray);
-				z-index: 1000;
-				overflow-y: auto;
-				padding: 2rem 1.5rem;
-			}
-
-			.main-content {
-				margin-left: 280px;
-				min-height: 100vh;
-			}
-
-			.section-card {
-				background: rgba(255, 255, 255, 0.8);
-				backdrop-filter: blur(10px);
-				border: 1px solid var(--soft-gray);
-				transition: all 0.3s ease;
-			}
-
-			.section-card:hover {
-				transform: translateY(-2px);
-				box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-			}
-
-			.bento-grid {
-				display: grid;
-				grid-template-columns: 2fr 1fr;
-				gap: 2rem;
-				align-items: start;
-			}
-
-			.citation-link {
-				color: var(--accent-blue);
-				text-decoration: none;
-				font-weight: 500;
-				border-bottom: 1px dotted var(--accent-blue);
-			}
-
-			.citation-link:hover {
-				color: var(--deep-charcoal);
-				border-bottom-style: solid;
-			}
-
-			.highlight-box {
-				background: linear-gradient(135deg, rgba(156, 175, 136, 0.1), rgba(107, 125, 140, 0.1));
-				border-left: 4px solid var(--sage-green);
-			}
-
-			.mermaid-container {
-				display: flex;
-				justify-content: center;
-				min-height: 300px;
-				max-height: 800px;
-				background: #ffffff;
-				border: 2px solid #e5e7eb;
-				border-radius: 12px;
-				padding: 30px;
-				margin: 30px 0;
-				box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-				position: relative;
-				overflow: hidden;
-			}
-
-			.mermaid-container .mermaid {
-				width: 100%;
-				max-width: 100%;
-				height: 100%;
-				cursor: grab;
-				transition: transform 0.3s ease;
-				transform-origin: center center;
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				touch-action: none;
-				-webkit-user-select: none;
-				-moz-user-select: none;
-				-ms-user-select: none;
-				user-select: none;
-			}
-
-			.mermaid-container .mermaid svg {
-				max-width: 100%;
-				height: 100%;
-				display: block;
-				margin: 0 auto;
-			}
-
-			.mermaid-container .mermaid:active {
-				cursor: grabbing;
-			}
-
-			.mermaid-container.zoomed .mermaid {
-				height: 100%;
-				width: 100%;
-				cursor: grab;
-			}
-
-			.mermaid-controls {
-				position: absolute;
-				top: 15px;
-				right: 15px;
-				display: flex;
-				gap: 10px;
-				z-index: 20;
-				background: rgba(255, 255, 255, 0.95);
-				padding: 8px;
-				border-radius: 8px;
-				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-			}
-
-			.mermaid-control-btn {
-				background: #ffffff;
-				border: 1px solid #d1d5db;
-				border-radius: 6px;
-				padding: 10px;
-				cursor: pointer;
-				transition: all 0.2s ease;
-				color: #374151;
-				font-size: 14px;
-				min-width: 36px;
-				height: 36px;
-				text-align: center;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			}
-
-			.mermaid-control-btn:hover {
-				background: #f8fafc;
-				border-color: #3b82f6;
-				color: #3b82f6;
-				transform: translateY(-1px);
-			}
-
-			.mermaid-control-btn:active {
-				transform: scale(0.95);
-			}
-
-			/* Mermaid theme customization for better contrast */
-			.mermaid .node rect,
-			.mermaid .node circle,
-			.mermaid .node polygon {
-				fill: #ffffff !important;
-				stroke: var(--deep-charcoal) !important;
-				stroke-width: 2px !important;
-			}
-
-			.mermaid .node .label,
-			.mermaid .nodeLabel,
-			.mermaid .label {
-				color: var(--deep-charcoal) !important;
-				font-weight: 500 !important;
-				font-size: 13px !important;
-				fill: var(--deep-charcoal) !important;
-			}
-
-			.mermaid .edgePath .path {
-				stroke: var(--accent-blue) !important;
-				stroke-width: 2px !important;
-			}
-
-			.mermaid .edgeLabel {
-				background-color: rgba(255, 255, 255, 0.9) !important;
-				color: var(--deep-charcoal) !important;
-				font-weight: 500 !important;
-			}
-
-			/* Timeline specific styles with better contrast */
-			.mermaid .section0,
-			.mermaid .section1,
-			.mermaid .section2,
-			.mermaid .section3 {
-				fill: var(--sage-green) !important;
-				opacity: 0.8 !important;
-			}
-
-			.mermaid .cScale0,
-			.mermaid .cScale1,
-			.mermaid .cScale2 {
-				fill: var(--deep-charcoal) !important;
-				color: var(--deep-charcoal) !important;
-			}
-
-			.mermaid .timeline-text {
-				fill: var(--deep-charcoal) !important;
-				font-weight: 500 !important;
-			}
-
-			/* Flowchart specific node colors with high contrast */
-			.mermaid .node[class*="default"] rect {
-				fill: #ffffff !important;
-				stroke: var(--deep-charcoal) !important;
-			}
-
-			.mermaid .node[class*="default"] .label {
-				fill: var(--deep-charcoal) !important;
-				color: var(--deep-charcoal) !important;
-			}
-
-			@media (max-width: 1024px) {
-				.toc-fixed {
-					transform: translateX(-100%);
-					transition: transform 0.3s ease;
-				}
-
-				.toc-fixed.open {
-					transform: translateX(0);
-				}
-
-				.main-content {
-					margin-left: 0;
-				}
-
-				.bento-grid {
-					grid-template-columns: 1fr;
-				}
-
-				.mermaid-control-btn:not(.reset-zoom) {
-					display: none;
-				}
-
-				.mermaid-controls {
-					top: auto;
-					bottom: 15px;
-					right: 15px;
-				}
-			}
-
-			/* Additional small screen adjustments */
-			@media (max-width: 768px) {
-				.hero-gradient {
-					padding: 2rem 1rem !important;
-				}
-
-				.hero-gradient h1 {
-					font-size: 2.5rem;
-					line-height: 1.2;
-				}
-
-				.hero-gradient p {
-					font-size: 1rem;
-				}
-
-				.bento-grid>div {
-					padding: 1.5rem;
-				}
-
-				.grid.md\:grid-cols-3 {
-					grid-template-columns: 1fr;
-				}
-
-				.grid.md\:grid-cols-2 {
-					grid-template-columns: 1fr;
-				}
-
-				.section-card {
-					padding: 1.5rem;
-				}
-
-				.mermaid-container {
-					padding: 15px;
-				}
-			}
-		</style>
-		<base target="_blank">
-	</head>
-
-	<body>
-		<!-- Mobile TOC Toggle -->
-		<button id="toc-toggle" class="fixed top-4 left-4 z-50 lg:hidden bg-white p-2 rounded-lg shadow-lg">
-			<i class="fas fa-bars"></i>
-		</button>
-
-		<!-- Table of Contents -->
-		<nav id="toc" class="toc-fixed">
-			<div class="mb-8">
-				<h3 class="serif-heading text-lg font-semibold text-gray-800 mb-4">目录导航</h3>
-				<div class="space-y-2">
-					<a href="#overview"
-						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">系统概览</a>
-					<a href="#core-concepts"
-						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">核心理念</a>
-					<a href="#architecture"
-						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">架构模型</a>
-					<a href="#modules"
-						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">功能模块</a>
-					<a href="#data-model"
-						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">数据模型</a>
-					<a href="#ui-design"
-						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">界面设计</a>
-					<a href="#implementation"
-						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">实现逻辑</a>
-				</div>
-			</div>
-
-			<div class="border-t pt-4">
-				<p class="text-xs text-gray-500 mb-2">参考资料</p>
-				<div class="space-y-1">
-					<a href="https://xpro.mit.edu/courses/course-v1:xPRO+SysEngx1/"
-						class="citation-link text-xs block">MIT xPRO 系统架构</a>
-					<a href="https://tools.eq4c.com/ai-prompts/chatgpt-prompt-personal-life-productivity-operating-system-life-os/"
-						class="citation-link text-xs block">Life OS 概念</a>
-					<a href="https://www.notionlifedesign.com/" class="citation-link text-xs block">Notion Life
-						Design</a>
-					<a href="https://nicky-chin.cn/2020/11/13/im-timeline/" class="citation-link text-xs block">Timeline
-						模型</a>
-				</div>
-			</div>
-		</nav>
-
-		<!-- Main Content -->
-		<main class="main-content">
-			<!-- Hero Section -->
-			<section id="overview" class="hero-gradient relative overflow-hidden">
-				<div class="absolute inset-0 opacity-10">
-					<img src="https://kimi-img.moonshot.cn/pub/icon/spinner.svg" alt="抽象神经网络背景图"
-						class="w-full h-full object-cover" size="wallpaper" aspect="wide" query="抽象神经网络背景"
-						referrerpolicy="no-referrer" />
-				</div>
-
-				<div class="relative z-10 py-16 px-8">
-					<div class="bento-grid max-w-7xl mx-auto">
-						<div class="space-y-8">
-							<div class="space-y-4">
-								<h1 class="serif-heading text-5xl lg:text-6xl font-bold text-white leading-tight">
-									<span class="italic">个人人生</span>
-									<br>
-									<span class="text-4xl lg:text-5xl">同步系统</span>
-								</h1>
-								<p class="text-xl text-gray-200 max-w-2xl leading-relaxed">
-									构建高度个性化、仅供开发者本人使用的综合性人生管理平台，实现对个人生活、精神状态、能力发展的全面数字化"同步"
-								</p>
-							</div>
-
-							<div class="flex flex-wrap gap-4">
-								<span class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm">
-									<i class="fas fa-user mr-2"></i>自用系统
-								</span>
-								<span class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm">
-									<i class="fas fa-sync mr-2"></i>实时同步
-								</span>
-								<span class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm">
-									<i class="fas fa-expand-arrows-alt mr-2"></i>可扩展架构
-								</span>
-							</div>
-						</div>
-
-						<div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 space-y-6">
-							<h3 class="serif-heading text-2xl font-semibold text-white mb-4">核心洞察</h3>
-							<div class="space-y-4">
-								<div class="flex items-start space-x-3">
-									<div class="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
-									<p class="text-gray-200 text-sm">"同步"而非"状态"：关注动态过程而非静态快照</p>
-								</div>
-								<div class="flex items-start space-x-3">
-									<div class="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
-									<p class="text-gray-200 text-sm">六层分层模型构建人生宏观框架</p>
-								</div>
-								<div class="flex items-start space-x-3">
-									<div class="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
-									<p class="text-gray-200 text-sm">事件驱动模型实现真正的人生同步</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<!-- Core Concepts Section -->
-			<section id="core-concepts" class="py-16 px-8">
-				<div class="max-w-6xl mx-auto">
-					<h2 class="serif-heading text-4xl font-bold text-center mb-12">核心理念与系统目标</h2>
-
-					<div class="grid md:grid-cols-2 gap-8 mb-16">
-						<div class="section-card rounded-2xl p-8">
-							<div class="flex items-center mb-6">
-								<div
-									class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mr-4">
-									<i class="fas fa-user-cog text-white text-xl"></i>
-								</div>
-								<h3 class="serif-heading text-2xl font-semibold">系统定位</h3>
-							</div>
-							<p class="text-gray-700 leading-relaxed mb-4">
-								本系统旨在构建一个<strong>高度个性化、仅供开发者本人使用的综合性人生管理平台</strong>。其核心定位并非一个面向公众的服务产品，而是一个深度服务于个人成长、自我认知与人生规划的数字化工具。
-							</p>
-							<div class="highlight-box rounded-lg p-4">
-								<p class="text-sm font-medium text-gray-800">
-									<i class="fas fa-bullseye mr-2 text-green-600"></i>
-									首要目标：实现对个人生活、精神状态、能力发展乃至整个人生轨迹的全面数字化"同步"
-								</p>
-							</div>
-						</div>
-
-						<div class="section-card rounded-2xl p-8">
-							<div class="flex items-center mb-6">
-								<div
-									class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mr-4">
-									<i class="fas fa-sync-alt text-white text-xl"></i>
-								</div>
-								<h3 class="serif-heading text-2xl font-semibold">同步理念</h3>
-							</div>
-							<p class="text-gray-700 leading-relaxed mb-4">
-								系统的核心驱动力在于实现<strong>"同步"（Synchronization），而非仅仅记录"状态"（State）</strong>。这一理念的根本区别在于，系统关注的不是静态的快照，而是动态的过程和关联。
-							</p>
-							<div class="space-y-2">
-								<div class="flex items-center">
-									<i class="fas fa-circle text-blue-500 text-xs mr-3"></i>
-									<span class="text-sm">数据层面的实时记录与历史追溯</span>
-								</div>
-								<div class="flex items-center">
-									<i class="fas fa-circle text-blue-500 text-xs mr-3"></i>
-									<span class="text-sm">逻辑层面的状态关联与影响分析</span>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<!-- System Objectives -->
-					<div class="section-card rounded-2xl p-8">
-						<h3 class="serif-heading text-2xl font-semibold mb-6 text-center">系统目标层级</h3>
-						<div class="grid md:grid-cols-3 gap-6">
-							<div class="text-center">
-								<div
-									class="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-									<i class="fas fa-eye text-white text-2xl"></i>
-								</div>
-								<h4 class="font-semibold mb-2">全面映射</h4>
-								<p class="text-sm text-gray-600">实现个人人生与精神世界的数字化孪生</p>
-							</div>
-							<div class="text-center">
-								<div
-									class="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-									<i class="fas fa-brain text-white text-2xl"></i>
-								</div>
-								<h4 class="font-semibold mb-2">动态分析</h4>
-								<p class="text-sm text-gray-600">通过数据挖掘发现被忽略的细节和规律</p>
-							</div>
-							<div class="text-center">
-								<div
-									class="w-16 h-16 bg-gradient-to-br from-red-400 to-red-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-									<i class="fas fa-chart-line text-white text-2xl"></i>
-								</div>
-								<h4 class="font-semibold mb-2">前瞻指导</h4>
-								<p class="text-sm text-gray-600">基于趋势预测生成个性化发展建议</p>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<!-- Architecture Section -->
-			<section id="architecture" class="py-16 px-8 bg-gray-50">
-				<div class="max-w-6xl mx-auto">
-					<h2 class="serif-heading text-4xl font-bold text-center mb-12">总体架构模型</h2>
-
-					<!-- Architecture Diagram -->
-					<div class="mb-12">
-						<div class="mermaid-container">
-							<div class="mermaid-controls">
-								<button class="mermaid-control-btn zoom-in" title="放大">
-									<i class="fas fa-search-plus"></i>
-								</button>
-								<button class="mermaid-control-btn zoom-out" title="缩小">
-									<i class="fas fa-search-minus"></i>
-								</button>
-								<button class="mermaid-control-btn reset-zoom" title="重置">
-									<i class="fas fa-expand-arrows-alt"></i>
-								</button>
-								<button class="mermaid-control-btn fullscreen" title="全屏查看">
-									<i class="fas fa-expand"></i>
-								</button>
-							</div>
-							<div class="mermaid">
-								graph TB
-								A["生命体中枢
-								<br />Self Core"] --> B["根基层
-								<br />精神"]
-								A --> C["支柱层
-								<br />健康"]
-								A --> D["驱动层
-								<br />学习"]
-								A --> E["网络层
-								<br />关系"]
-								A --> F["目标层
-								<br />成就"]
-								A --> G["顶层
-								<br />意义"]
-								A --> H["调节环
-								<br />反思"]
-
-								B --> I["价值观"]
-								B --> J["人生使命"]
-
-								C --> K["身体健康"]
-								C --> L["心理状态"]
-
-								D --> M["知识管理"]
-								D --> N["技能培养"]
-
-								E --> O["家庭关系"]
-								E --> P["社交网络"]
-
-								F --> Q["财富管理"]
-								F --> R["职业发展"]
-
-								G --> S["人生意义"]
-								G --> T["长期愿景"]
-
-								H --> U["每周复盘"]
-								H --> V["系统调整"]
-
-								style A fill:#9CAF88,stroke:#2D3436,stroke-width:3px,color:#fff
-								style B fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
-								style C fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
-								style D fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
-								style E fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
-								style F fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
-								style G fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
-								style H fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
-							</div>
-						</div>
-					</div>
-
-					<!-- Architecture Principles -->
-					<div class="grid md:grid-cols-2 gap-8 mb-12">
-						<div class="section-card rounded-2xl p-8">
-							<h3 class="serif-heading text-2xl font-semibold mb-6">设计原则</h3>
-							<div class="space-y-4">
-								<div class="highlight-box rounded-lg p-4">
-									<h4 class="font-semibold mb-2">人生架构方法论</h4>
-									<p class="text-sm text-gray-700">
-										借鉴<a href="https://xpro.mit.edu/courses/course-v1:xPRO+SysEngx1/"
-											class="citation-link">MIT xPRO系统架构思想</a>，将人生视为需要精心设计的复杂系统
-									</p>
-								</div>
-								<div class="highlight-box rounded-lg p-4">
-									<h4 class="font-semibold mb-2">个人操作系统</h4>
-									<p class="text-sm text-gray-700">
-										融合<a href="https://tools.eq4c.com/ai-prompts/chatgpt-prompt-personal-life-productivity-operating-system-life-os/"
-											class="citation-link">Life OS模块化思想</a>，实现灵活扩展
-									</p>
-								</div>
-							</div>
-						</div>
-
-						<div class="section-card rounded-2xl p-8">
-							<h3 class="serif-heading text-2xl font-semibold mb-6">模块化优势</h3>
-							<div class="space-y-3">
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-puzzle-piece text-green-600"></i>
-									<span class="text-sm">灵活组合与扩展</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-shield-alt text-green-600"></i>
-									<span class="text-sm">模块间松耦合</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-cogs text-green-600"></i>
-									<span class="text-sm">独立维护升级</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-user-edit text-green-600"></i>
-									<span class="text-sm">个性化定制</span>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<!-- Six-Layer Model -->
-					<div class="section-card rounded-2xl p-8">
-						<h3 class="serif-heading text-2xl font-semibold mb-8 text-center">六层分层模型</h3>
-						<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-							<div class="border-l-4 border-purple-400 pl-4">
-								<h4 class="font-semibold text-purple-700 mb-2">根基层 - 精神</h4>
-								<p class="text-sm text-gray-600">价值观、信仰、人生使命</p>
-							</div>
-							<div class="border-l-4 border-green-400 pl-4">
-								<h4 class="font-semibold text-green-700 mb-2">支柱层 - 健康</h4>
-								<p class="text-sm text-gray-600">身体与心理健康、精力管理</p>
-							</div>
-							<div class="border-l-4 border-blue-400 pl-4">
-								<h4 class="font-semibold text-blue-700 mb-2">驱动层 - 学习</h4>
-								<p class="text-sm text-gray-600">知识、技能与学习能力</p>
-							</div>
-							<div class="border-l-4 border-orange-400 pl-4">
-								<h4 class="font-semibold text-orange-700 mb-2">网络层 - 关系</h4>
-								<p class="text-sm text-gray-600">人际关系与社交网络</p>
-							</div>
-							<div class="border-l-4 border-red-400 pl-4">
-								<h4 class="font-semibold text-red-700 mb-2">目标层 - 成就</h4>
-								<p class="text-sm text-gray-600">财富、职业与物质目标</p>
-							</div>
-							<div class="border-l-4 border-indigo-400 pl-4">
-								<h4 class="font-semibold text-indigo-700 mb-2">顶层 - 意义</h4>
-								<p class="text-sm text-gray-600">人生意义与长期愿景</p>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<!-- Modules Section -->
-			<section id="modules" class="py-16 px-8">
-				<div class="max-w-6xl mx-auto">
-					<h2 class="serif-heading text-4xl font-bold text-center mb-12">核心功能模块设计</h2>
-
-					<!-- Module Categories -->
-					<div class="grid md:grid-cols-2 gap-8 mb-12">
-						<div class="section-card rounded-2xl p-8">
-							<div class="flex items-center mb-6">
-								<div
-									class="w-12 h-12 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-xl flex items-center justify-center mr-4">
-									<i class="fas fa-rocket text-white text-xl"></i>
-								</div>
-								<h3 class="serif-heading text-2xl font-semibold">初始化模块</h3>
-							</div>
-
-							<div class="space-y-4">
-								<div class="bg-gray-50 rounded-lg p-4">
-									<h4 class="font-semibold mb-2">当前人生蓝图</h4>
-									<p class="text-sm text-gray-600">全面盘点身体健康、心理状态、知识技能等现状</p>
-								</div>
-								<div class="bg-gray-50 rounded-lg p-4">
-									<h4 class="font-semibold mb-2">未来人生蓝图</h4>
-									<p class="text-sm text-gray-600">描绘理想生活状态，明确核心价值观与人生使命</p>
-								</div>
-								<div class="bg-gray-50 rounded-lg p-4">
-									<h4 class="font-semibold mb-2">行为评估矩阵</h4>
-									<p class="text-sm text-gray-600">将目标分解为可衡量的关键行为指标(KBIs)</p>
-								</div>
-							</div>
-						</div>
-
-						<div class="section-card rounded-2xl p-8">
-							<div class="flex items-center mb-6">
-								<div
-									class="w-12 h-12 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center mr-4">
-									<i class="fas fa-sync text-white text-xl"></i>
-								</div>
-								<h3 class="serif-heading text-2xl font-semibold">同步记录模块</h3>
-							</div>
-
-							<div class="space-y-4">
-								<div class="bg-gray-50 rounded-lg p-4">
-									<h4 class="font-semibold mb-2">事件驱动模型</h4>
-									<p class="text-sm text-gray-600">以"人生事件"为基本单位，捕捉变化连续性</p>
-								</div>
-								<div class="bg-gray-50 rounded-lg p-4">
-									<h4 class="font-semibold mb-2">时间轴视图</h4>
-									<p class="text-sm text-gray-600">借鉴<a
-											href="https://nicky-chin.cn/2020/11/13/im-timeline/"
-											class="citation-link">Timeline模型</a>，记录与追溯人生轨迹</p>
-								</div>
-								<div class="bg-gray-50 rounded-lg p-4">
-									<h4 class="font-semibold mb-2">智能输入机制</h4>
-									<p class="text-sm text-gray-600">主动输入与系统辅助提示相结合</p>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<!-- Analysis and Planning Modules -->
-					<div class="grid md:grid-cols-2 gap-8">
-						<div class="section-card rounded-2xl p-8">
-							<div class="flex items-center mb-6">
-								<div
-									class="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center mr-4">
-									<i class="fas fa-chart-bar text-white text-xl"></i>
-								</div>
-								<h3 class="serif-heading text-2xl font-semibold">分析评估模块</h3>
-							</div>
-
-							<div class="space-y-4">
-								<div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4">
-									<h4 class="font-semibold mb-2 text-purple-800">人生价值链分析</h4>
-									<p class="text-sm text-gray-700">揭示个人行为与最终价值的关系，优化资源配置</p>
-								</div>
-								<div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4">
-									<h4 class="font-semibold mb-2 text-purple-800">全面评估报告</h4>
-									<p class="text-sm text-gray-700">定期生成关键成就、趋势分析、行为洞察</p>
-								</div>
-							</div>
-						</div>
-
-						<div class="section-card rounded-2xl p-8">
-							<div class="flex items-center mb-6">
-								<div
-									class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mr-4">
-									<i class="fas fa-route text-white text-xl"></i>
-								</div>
-								<h3 class="serif-heading text-2xl font-semibold">规划推进模块</h3>
-							</div>
-
-							<div class="space-y-4">
-								<div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
-									<h4 class="font-semibold mb-2 text-green-800">人生路线图</h4>
-									<p class="text-sm text-gray-700">将愿景分解为可管理的阶段性目标</p>
-								</div>
-								<div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
-									<h4 class="font-semibold mb-2 text-green-800">结果链分解</h4>
-									<p class="text-sm text-gray-700">将目标层层分解为具体可执行的任务</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<!-- Data Model Section -->
-			<section id="data-model" class="py-16 px-8 bg-gray-50">
-				<div class="max-w-6xl mx-auto">
-					<h2 class="serif-heading text-4xl font-bold text-center mb-12">数据模型与同步机制</h2>
-
-					<!-- Data Model Diagram -->
-					<div class="mb-12">
-						<div class="mermaid-container">
-							<div class="mermaid-controls">
-								<button class="mermaid-control-btn zoom-in" title="放大">
-									<i class="fas fa-search-plus"></i>
-								</button>
-								<button class="mermaid-control-btn zoom-out" title="缩小">
-									<i class="fas fa-search-minus"></i>
-								</button>
-								<button class="mermaid-control-btn reset-zoom" title="重置">
-									<i class="fas fa-expand-arrows-alt"></i>
-								</button>
-								<button class="mermaid-control-btn fullscreen" title="全屏查看">
-									<i class="fas fa-expand"></i>
-								</button>
-							</div>
-							<div class="mermaid">
-								graph LR
-								A["用户输入
-								<br />User Input"] --> B["数据输入模块
-								<br />Data Input Module"]
-								B --> C["人生事件
-								<br />Life Event"]
-								C --> D["同步引擎
-								<br />Sync Engine"]
-								D --> E["人生网
-								<br />Life Web"]
-								D --> F["人生规则
-								<br />Life Rules"]
-								E --> G["节点状态更新
-								<br />Node State Update"]
-								F --> G
-								G --> H["分析引擎
-								<br />Analysis Engine"]
-								H --> I["可视化展示
-								<br />Visualization"]
-								H --> J["智能建议
-								<br />Smart Suggestions"]
-
-								E --> K["健康模块"]
-								E --> L["财务模块"]
-								E --> M["学习模块"]
-								E --> N["关系模块"]
-
-								style A fill:#E8E6E1,stroke:#2D3436,stroke-width:2px
-								style B fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
-								style C fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
-								style D fill:#9CAF88,stroke:#2D3436,stroke-width:3px,color:#fff
-								style E fill:#9CAF88,stroke:#2D3436,stroke-width:3px,color:#fff
-								style F fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
-								style G fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
-								style H fill:#6B7D8C,stroke:#fff,stroke-width:3px,color:#fff
-								style I fill:#E8E6E1,stroke:#2D3436,stroke-width:2px
-								style J fill:#E8E6E1,stroke:#2D3436,stroke-width:2px
-								style K fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
-								style L fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
-								style M fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
-								style N fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
-							</div>
-						</div>
-					</div>
-
-					<!-- Data Model Components -->
-					<div class="grid md:grid-cols-3 gap-8 mb-12">
-						<div class="section-card rounded-2xl p-8">
-							<div
-								class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-								<i class="fas fa-circle-nodes text-white text-2xl"></i>
-							</div>
-							<h3 class="serif-heading text-xl font-semibold text-center mb-4">节点设计</h3>
-							<p class="text-sm text-gray-600 text-center mb-4">代表人生的各个维度与状态</p>
-							<div class="space-y-2">
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-dot-circle text-blue-500 text-xs"></i>
-									<span class="text-xs">分层归属管理</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-dot-circle text-blue-500 text-xs"></i>
-									<span class="text-xs">丰富属性定义</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-dot-circle text-blue-500 text-xs"></i>
-									<span class="text-xs">层级关系构建</span>
-								</div>
-							</div>
-						</div>
-
-						<div class="section-card rounded-2xl p-8">
-							<div
-								class="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-								<i class="fas fa-link text-white text-2xl"></i>
-							</div>
-							<h3 class="serif-heading text-xl font-semibold text-center mb-4">连接设计</h3>
-							<p class="text-sm text-gray-600 text-center mb-4">定义节点间的关联与影响</p>
-							<div class="space-y-2">
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-dot-circle text-green-500 text-xs"></i>
-									<span class="text-xs">方向性关系</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-dot-circle text-green-500 text-xs"></i>
-									<span class="text-xs">权重影响定义</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-dot-circle text-green-500 text-xs"></i>
-									<span class="text-xs">规则自动触发</span>
-								</div>
-							</div>
-						</div>
-
-						<div class="section-card rounded-2xl p-8">
-							<div
-								class="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-								<i class="fas fa-database text-white text-2xl"></i>
-							</div>
-							<h3 class="serif-heading text-xl font-semibold text-center mb-4">状态分类</h3>
-							<p class="text-sm text-gray-600 text-center mb-4">实时、预测、固定与可变</p>
-							<div class="space-y-2">
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-dot-circle text-purple-500 text-xs"></i>
-									<span class="text-xs">实时状态追踪</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-dot-circle text-purple-500 text-xs"></i>
-									<span class="text-xs">预测状态分析</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-dot-circle text-purple-500 text-xs"></i>
-									<span class="text-xs">历史状态存档</span>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<!-- Synchronization Mechanism -->
-					<div class="section-card rounded-2xl p-8">
-						<h3 class="serif-heading text-2xl font-semibold mb-8 text-center">同步机制实现</h3>
-						<div class="grid md:grid-cols-2 gap-8">
-							<div>
-								<h4 class="font-semibold mb-4 flex items-center">
-									<i class="fas fa-cogs text-blue-600 mr-2"></i>
-									基于规则的逻辑同步
-								</h4>
-								<div class="bg-blue-50 rounded-lg p-4 mb-4">
-									<p class="text-sm font-mono text-blue-800">
-										IF 连续三天睡眠不足6小时
-										<br>
-										THEN 精力值下降20%
-									</p>
-								</div>
-								<p class="text-sm text-gray-600">
-									用户可自定义或系统自动生成规则，实现因果关系的模拟和状态更新
-								</p>
-							</div>
-
-							<div>
-								<h4 class="font-semibold mb-4 flex items-center">
-									<i class="fas fa-project-diagram text-green-600 mr-2"></i>
-									跨模块数据联动
-								</h4>
-								<div class="space-y-2">
-									<div class="flex items-start space-x-2">
-										<i class="fas fa-arrow-right text-green-500 text-xs mt-1"></i>
-										<span class="text-sm">健康数据变化触发情绪日记提示</span>
-									</div>
-									<div class="flex items-start space-x-2">
-										<i class="fas fa-arrow-right text-green-500 text-xs mt-1"></i>
-										<span class="text-sm">财务支出自动关联活动类型</span>
-									</div>
-									<div class="flex items-start space-x-2">
-										<i class="fas fa-arrow-right text-green-500 text-xs mt-1"></i>
-										<span class="text-sm">目标进度实时反馈行为影响</span>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<!-- UI Design Section -->
-			<section id="ui-design" class="py-16 px-8">
-				<div class="max-w-6xl mx-auto">
-					<h2 class="serif-heading text-4xl font-bold text-center mb-12">用户交互与视图设计</h2>
-
-					<!-- Four Views -->
-					<div class="grid md:grid-cols-2 gap-8 mb-12">
-						<div class="section-card rounded-2xl p-8">
-							<div class="flex items-center mb-6">
-								<div
-									class="w-12 h-12 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center mr-4">
-									<i class="fas fa-tachometer-alt text-white text-xl"></i>
-								</div>
-								<h3 class="serif-heading text-2xl font-semibold">当前情况视图</h3>
-							</div>
-							<p class="text-gray-700 mb-6">实时展示个人全景状态的多维仪表盘</p>
-							<div class="space-y-3">
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-heart text-red-500"></i>
-									<span class="text-sm">健康概览：步数、睡眠、精力</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-tasks text-blue-500"></i>
-									<span class="text-sm">任务焦点：今日三大重要任务</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-smile text-yellow-500"></i>
-									<span class="text-sm">情绪状态：当前心情与波动曲线</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-bullseye text-green-500"></i>
-									<span class="text-sm">目标进度：关键目标完成度</span>
-								</div>
-							</div>
-						</div>
-
-						<div class="section-card rounded-2xl p-8">
-							<div class="flex items-center mb-6">
-								<div
-									class="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center mr-4">
-									<i class="fas fa-chart-line text-white text-xl"></i>
-								</div>
-								<h3 class="serif-heading text-2xl font-semibold">评估视图</h3>
-							</div>
-							<p class="text-gray-700 mb-6">基于特定时间段的深度分析与建议</p>
-							<div class="space-y-3">
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-balance-scale text-purple-500"></i>
-									<span class="text-sm">人生平衡轮：多维度投入分析</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-trending-up text-orange-500"></i>
-									<span class="text-sm">趋势分析：关键指标变化追踪</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-link text-blue-500"></i>
-									<span class="text-sm">关联性分析：变量间关系揭示</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-lightbulb text-yellow-500"></i>
-									<span class="text-sm">个性化建议：基于分析的改进方案</span>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div class="grid md:grid-cols-2 gap-8">
-						<div class="section-card rounded-2xl p-8">
-							<div class="flex items-center mb-6">
-								<div
-									class="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center mr-4">
-									<i class="fas fa-clock text-white text-xl"></i>
-								</div>
-								<h3 class="serif-heading text-2xl font-semibold">时间轴视图</h3>
-							</div>
-							<p class="text-gray-700 mb-6">回顾历史与预测未来的连续人生故事</p>
-							<div class="space-y-3">
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-history text-orange-500"></i>
-									<span class="text-sm">历史追溯：自由缩放浏览轨迹</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-search text-green-500"></i>
-									<span class="text-sm">模式识别：高亮重复事件模式</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-calendar-alt text-blue-500"></i>
-									<span class="text-sm">未来规划：标记计划与预测</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-columns text-purple-500"></i>
-									<span class="text-sm">对比分析：不同阶段状态比较</span>
-								</div>
-							</div>
-						</div>
-
-						<div class="section-card rounded-2xl p-8">
-							<div class="flex items-center mb-6">
-								<div
-									class="w-12 h-12 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center mr-4">
-									<i class="fas fa-gauge-high text-white text-xl"></i>
-								</div>
-								<h3 class="serif-heading text-2xl font-semibold">仪表盘视图</h3>
-							</div>
-							<p class="text-gray-700 mb-6">关键指标与目标进度的高效概览</p>
-							<div class="space-y-3">
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-chart-pie text-red-500"></i>
-									<span class="text-sm">核心KPI区域：净资产、体脂率等</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-percentage text-blue-500"></i>
-									<span class="text-sm">目标进度：重要目标完成百分比</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-exclamation-triangle text-yellow-500"></i>
-									<span class="text-sm">系统提醒：风险预警与建议</span>
-								</div>
-								<div class="flex items-center space-x-3">
-									<i class="fas fa-battery-three-quarters text-green-500"></i>
-									<span class="text-sm">状态指示器：综合状态评分</span>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<!-- Implementation Logic -->
-			<section id="implementation" class="py-16 px-8 bg-gray-50">
-				<div class="max-w-6xl mx-auto">
-					<h2 class="serif-heading text-4xl font-bold text-center mb-12">实现逻辑与技术架构</h2>
-
-					<!-- Implementation Roadmap -->
-					<div class="mb-12">
-						<div class="mermaid-container">
-							<div class="mermaid-controls">
-								<button class="mermaid-control-btn zoom-in" title="放大">
-									<i class="fas fa-search-plus"></i>
-								</button>
-								<button class="mermaid-control-btn zoom-out" title="缩小">
-									<i class="fas fa-search-minus"></i>
-								</button>
-								<button class="mermaid-control-btn reset-zoom" title="重置">
-									<i class="fas fa-expand-arrows-alt"></i>
-								</button>
-								<button class="mermaid-control-btn fullscreen" title="全屏查看">
-									<i class="fas fa-expand"></i>
-								</button>
-							</div>
-							<div class="mermaid">
-								timeline
-								title "个人人生同步系统实现路线图"
-
-								section "第一阶段：核心架构"
-								"节点系统设计" : "节点定义与属性"
-								: "层级关系建立"
-								"连接机制" : "关联规则定义"
-								: "影响权重设置"
-								"同步引擎" : "基本同步逻辑"
-								: "规则引擎实现"
-
-								section "第二阶段：功能模块"
-								"初始化模块" : "当前蓝图生成"
-								: "未来蓝图规划"
-								"记录系统" : "事件驱动模型"
-								: "时间轴视图"
-								"分析模块" : "基础数据统计"
-								: "趋势分析"
-
-								section "第三阶段：智能化"
-								"人生价值链" : "价值路径分析"
-								: "资源优化建议"
-								"预测系统" : "基于历史预测"
-								: "风险评估"
-								"智能提醒" : "情境感知提醒"
-								: "个性化建议"
-
-								section "第四阶段：完善优化"
-								"界面优化" : "用户体验提升"
-								: "多端同步"
-								"性能优化" : "数据处理优化"
-								: "响应速度提升"
-								"扩展接口" : "API开放"
-								: "第三方集成"
-							</div>
-						</div>
-					</div>
-
-					<!-- Core Implementation Principles -->
-					<div class="grid md:grid-cols-3 gap-8 mb-12">
-						<div class="section-card rounded-2xl p-8 text-center">
-							<div
-								class="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full mx-auto mb-6 flex items-center justify-center">
-								<i class="fas fa-database text-white text-2xl"></i>
-							</div>
-							<h3 class="serif-heading text-xl font-semibold mb-4">数据层设计</h3>
-							<div class="space-y-2 text-left">
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-check-circle text-green-500 text-sm"></i>
-									<span class="text-sm">图数据库模型</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-check-circle text-green-500 text-sm"></i>
-									<span class="text-sm">时间序列存储</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-check-circle text-green-500 text-sm"></i>
-									<span class="text-sm">多维度索引</span>
-								</div>
-							</div>
-						</div>
-
-						<div class="section-card rounded-2xl p-8 text-center">
-							<div
-								class="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full mx-auto mb-6 flex items-center justify-center">
-								<i class="fas fa-cogs text-white text-2xl"></i>
-							</div>
-							<h3 class="serif-heading text-xl font-semibold mb-4">逻辑层设计</h3>
-							<div class="space-y-2 text-left">
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-check-circle text-green-500 text-sm"></i>
-									<span class="text-sm">规则引擎</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-check-circle text-green-500 text-sm"></i>
-									<span class="text-sm">事件驱动架构</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-check-circle text-green-500 text-sm"></i>
-									<span class="text-sm">状态机管理</span>
-								</div>
-							</div>
-						</div>
-
-						<div class="section-card rounded-2xl p-8 text-center">
-							<div
-								class="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full mx-auto mb-6 flex items-center justify-center">
-								<i class="fas fa-desktop text-white text-2xl"></i>
-							</div>
-							<h3 class="serif-heading text-xl font-semibold mb-4">表现层设计</h3>
-							<div class="space-y-2 text-left">
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-check-circle text-green-500 text-sm"></i>
-									<span class="text-sm">响应式布局</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-check-circle text-green-500 text-sm"></i>
-									<span class="text-sm">数据可视化</span>
-								</div>
-								<div class="flex items-center space-x-2">
-									<i class="fas fa-check-circle text-green-500 text-sm"></i>
-									<span class="text-sm">交互式图表</span>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<!-- Key Innovations -->
-					<div class="section-card rounded-2xl p-8">
-						<h3 class="serif-heading text-2xl font-semibold mb-8 text-center">核心创新点</h3>
-						<div class="grid md:grid-cols-2 gap-8">
-							<div>
-								<h4 class="font-semibold mb-4 flex items-center">
-									<i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
-									人生网模型
-								</h4>
-								<p class="text-gray-700 mb-4">
-									将人生各个维度抽象为相互关联的节点网络，通过连接定义影响关系，实现复杂人生系统的数字化建模。
-								</p>
-								<div class="bg-yellow-50 rounded-lg p-4">
-									<p class="text-sm text-yellow-800">
-										<strong>优势：</strong>能够模拟现实生活中的因果关系，提供具有逻辑依据的洞察和建议
-									</p>
-								</div>
-							</div>
-
-							<div>
-								<h4 class="font-semibold mb-4 flex items-center">
-									<i class="fas fa-sync-alt text-blue-500 mr-2"></i>
-									同步而非记录
-								</h4>
-								<p class="text-gray-700 mb-4">
-									区别于传统的状态记录系统，强调动态同步和实时关联，真正实现个人生活的数字化映射。
-								</p>
-								<div class="bg-blue-50 rounded-lg p-4">
-									<p class="text-sm text-blue-800">
-										<strong>优势：</strong>从被动记录工具转变为主动的个人成长教练
-									</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			<!-- Conclusion -->
-			<section class="py-16 px-8 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-				<div class="max-w-4xl mx-auto text-center">
-					<h2 class="serif-heading text-4xl font-bold mb-8">构建你的人生操作系统</h2>
-					<p class="text-xl text-gray-300 mb-8 leading-relaxed">
-						个人人生同步系统不仅仅是一个数字化工具，更是一个陪伴你成长的智能伙伴。
-						通过全面的数据同步、深度的关联分析和前瞻性的指导建议，
-						帮助你更好地理解自己、规划未来，实现人生潜能的最大化。
-					</p>
-					<div class="grid md:grid-cols-3 gap-8 mt-12">
-						<div class="text-center">
-							<div
-								class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mx-auto mb-4 flex items-center justify-center">
-								<i class="fas fa-user text-2xl"></i>
-							</div>
-							<h3 class="font-semibold mb-2">深度个性化</h3>
-							<p class="text-sm text-gray-400">仅供个人使用，随时间成长而不断演进</p>
-						</div>
-						<div class="text-center">
-							<div
-								class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mx-auto mb-4 flex items-center justify-center">
-								<i class="fas fa-infinity text-2xl"></i>
-							</div>
-							<h3 class="font-semibold mb-2">全生命周期</h3>
-							<p class="text-sm text-gray-400">覆盖从精神层面到物质成就的各个维度</p>
-						</div>
-						<div class="text-center">
-							<div
-								class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mx-auto mb-4 flex items-center justify-center">
-								<i class="fas fa-rocket text-2xl"></i>
-							</div>
-							<h3 class="font-semibold mb-2">持续进化</h3>
-							<p class="text-sm text-gray-400">可扩展架构支持未来的功能增强和优化</p>
-						</div>
-					</div>
-				</div>
-			</section>
-		</main>
-
-		<script>
-			// Initialize Mermaid
-			mermaid.initialize({
-				startOnLoad: true,
-				theme: 'base',
-				themeVariables: {
-					primaryColor: '#9CAF88',
-					primaryTextColor: '#2D3436',
-					primaryBorderColor: '#2D3436',
-					lineColor: '#6B7D8C',
-					secondaryColor: '#F5F1E8',
-					tertiaryColor: '#E8E6E1',
-					background: '#FFFFFF',
-					mainBkg: '#FFFFFF',
-					secondaryBkg: '#F5F1E8',
-					tertiaryBkg: '#E8E6E1'
-				},
-				flowchart: {
-					useMaxWidth: true,
-					htmlLabels: true,
-					curve: 'basis'
-				},
-				timeline: {
-					useMaxWidth: true
-				},
-				fontFamily: 'Inter, sans-serif'
-			});
-
-			// Initialize Mermaid Controls for zoom and pan
-			function initializeMermaidControls() {
-				const containers = document.querySelectorAll('.mermaid-container');
-
-				containers.forEach(container => {
-					const mermaidElement = container.querySelector('.mermaid');
-					let scale = 1;
-					let isDragging = false;
-					let startX, startY, translateX = 0,
-						translateY = 0;
-
-					// 触摸相关状态
-					let isTouch = false;
-					let touchStartTime = 0;
-					let initialDistance = 0;
-					let initialScale = 1;
-					let isPinching = false;
-
-					// Zoom controls
-					const zoomInBtn = container.querySelector('.zoom-in');
-					const zoomOutBtn = container.querySelector('.zoom-out');
-					const resetBtn = container.querySelector('.reset-zoom');
-					const fullscreenBtn = container.querySelector('.fullscreen');
-
-					function updateTransform() {
-						mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-
-						if (scale > 1) {
-							container.classList.add('zoomed');
-						} else {
-							container.classList.remove('zoomed');
-						}
-
-						mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
-					}
-
-					if (zoomInBtn) {
-						zoomInBtn.addEventListener('click', () => {
-							scale = Math.min(scale * 1.25, 4);
-							updateTransform();
-						});
-					}
-
-					if (zoomOutBtn) {
-						zoomOutBtn.addEventListener('click', () => {
-							scale = Math.max(scale / 1.25, 0.3);
-							if (scale <= 1) {
-								translateX = 0;
-								translateY = 0;
-							}
-							updateTransform();
-						});
-					}
-
-					if (resetBtn) {
-						resetBtn.addEventListener('click', () => {
-							scale = 1;
-							translateX = 0;
-							translateY = 0;
-							updateTransform();
-						});
-					}
-
-					if (fullscreenBtn) {
-						fullscreenBtn.addEventListener('click', () => {
-							if (container.requestFullscreen) {
-								container.requestFullscreen();
-							} else if (container.webkitRequestFullscreen) {
-								container.webkitRequestFullscreen();
-							} else if (container.msRequestFullscreen) {
-								container.msRequestFullscreen();
-							}
-						});
-					}
-
-					// Mouse Events
-					mermaidElement.addEventListener('mousedown', (e) => {
-						if (isTouch) return; // 如果是触摸设备，忽略鼠标事件
-
-						isDragging = true;
-						startX = e.clientX - translateX;
-						startY = e.clientY - translateY;
-						mermaidElement.style.cursor = 'grabbing';
-						updateTransform();
-						e.preventDefault();
-					});
-
-					document.addEventListener('mousemove', (e) => {
-						if (isDragging && !isTouch) {
-							translateX = e.clientX - startX;
-							translateY = e.clientY - startY;
-							updateTransform();
-						}
-					});
-
-					document.addEventListener('mouseup', () => {
-						if (isDragging && !isTouch) {
-							isDragging = false;
-							mermaidElement.style.cursor = 'grab';
-							updateTransform();
-						}
-					});
-
-					document.addEventListener('mouseleave', () => {
-						if (isDragging && !isTouch) {
-							isDragging = false;
-							mermaidElement.style.cursor = 'grab';
-							updateTransform();
-						}
-					});
-
-					// 获取两点之间的距离
-					function getTouchDistance(touch1, touch2) {
-						return Math.hypot(
-							touch2.clientX - touch1.clientX,
-							touch2.clientY - touch1.clientY
-						);
-					}
-
-					// Touch Events - 触摸事件处理
-					mermaidElement.addEventListener('touchstart', (e) => {
-						isTouch = true;
-						touchStartTime = Date.now();
-
-						if (e.touches.length === 1) {
-							// 单指拖动
-							isPinching = false;
-							isDragging = true;
-
-							const touch = e.touches[0];
-							startX = touch.clientX - translateX;
-							startY = touch.clientY - translateY;
-
-						} else if (e.touches.length === 2) {
-							// 双指缩放
-							isPinching = true;
-							isDragging = false;
-
-							const touch1 = e.touches[0];
-							const touch2 = e.touches[1];
-							initialDistance = getTouchDistance(touch1, touch2);
-							initialScale = scale;
-						}
-
-						e.preventDefault();
-					}, {
-						passive: false
-					});
-
-					mermaidElement.addEventListener('touchmove', (e) => {
-						if (e.touches.length === 1 && isDragging && !isPinching) {
-							// 单指拖动
-							const touch = e.touches[0];
-							translateX = touch.clientX - startX;
-							translateY = touch.clientY - startY;
-							updateTransform();
-
-						} else if (e.touches.length === 2 && isPinching) {
-							// 双指缩放
-							const touch1 = e.touches[0];
-							const touch2 = e.touches[1];
-							const currentDistance = getTouchDistance(touch1, touch2);
-
-							if (initialDistance > 0) {
-								const newScale = Math.min(Math.max(
-									initialScale * (currentDistance / initialDistance),
-									0.3
-								), 4);
-								scale = newScale;
-								updateTransform();
-							}
-						}
-
-						e.preventDefault();
-					}, {
-						passive: false
-					});
-
-					mermaidElement.addEventListener('touchend', (e) => {
-						// 重置状态
-						if (e.touches.length === 0) {
-							isDragging = false;
-							isPinching = false;
-							initialDistance = 0;
-
-							// 延迟重置isTouch，避免鼠标事件立即触发
-							setTimeout(() => {
-								isTouch = false;
-							}, 100);
-						} else if (e.touches.length === 1 && isPinching) {
-							// 从双指变为单指，切换为拖动模式
-							isPinching = false;
-							isDragging = true;
-
-							const touch = e.touches[0];
-							startX = touch.clientX - translateX;
-							startY = touch.clientY - translateY;
-						}
-
-						updateTransform();
-					});
-
-					mermaidElement.addEventListener('touchcancel', (e) => {
-						isDragging = false;
-						isPinching = false;
-						initialDistance = 0;
-
-						setTimeout(() => {
-							isTouch = false;
-						}, 100);
-
-						updateTransform();
-					});
-
-					// Enhanced wheel zoom with better center point handling
-					container.addEventListener('wheel', (e) => {
-						e.preventDefault();
-						const rect = container.getBoundingClientRect();
-						const centerX = rect.width / 2;
-						const centerY = rect.height / 2;
-
-						const delta = e.deltaY > 0 ? 0.9 : 1.1;
-						const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
-
-						// Adjust translation to zoom towards center
-						if (newScale !== scale) {
-							const scaleDiff = newScale / scale;
-							translateX = translateX * scaleDiff;
-							translateY = translateY * scaleDiff;
-							scale = newScale;
-
-							if (scale <= 1) {
-								translateX = 0;
-								translateY = 0;
-							}
-
-							updateTransform();
-						}
-					});
-
-					// Initialize display
-					updateTransform();
-				});
-			}
-
-			document.addEventListener('DOMContentLoaded', function() {
-				initializeMermaidControls();
-			});
-
-			// Smooth scrolling for anchor links
-			document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-				anchor.addEventListener('click', function(e) {
-					e.preventDefault();
-					const target = document.querySelector(this.getAttribute('href'));
-					if (target) {
-						target.scrollIntoView({
-							behavior: 'smooth',
-							block: 'start'
-						});
-					}
-				});
-			});
-
-			// Mobile TOC toggle
-			const tocToggle = document.getElementById('toc-toggle');
-			const toc = document.getElementById('toc');
-
-			tocToggle.addEventListener('click', function(e) {
-				e.stopPropagation();
-				toc.classList.toggle('open');
-			});
-
-			// Close TOC when clicking outside on mobile
-			document.addEventListener('click', function(e) {
-				if (window.innerWidth <= 1024 && !toc.contains(e.target) && !tocToggle.contains(e.target)) {
-					toc.classList.remove('open');
-				}
-			});
-
-			// Highlight active section in TOC
-			const sections = document.querySelectorAll('section[id]');
-			const tocLinks = document.querySelectorAll('#toc a[href^="#"]');
-
-			function highlightActiveSection() {
-				let currentSection = '';
-				sections.forEach(section => {
-					const rect = section.getBoundingClientRect();
-					if (rect.top <= 100 && rect.bottom >= 100) {
-						currentSection = section.id;
-					}
-				});
-
-				tocLinks.forEach(link => {
-					link.classList.remove('bg-gray-100', 'text-gray-800');
-					if (link.getAttribute('href') === `#${currentSection}`) {
-						link.classList.add('bg-gray-100', 'text-gray-800');
-					}
-				});
-			}
-
-			window.addEventListener('scroll', highlightActiveSection);
-			highlightActiveSection(); // Initial call
-		</script>
-	</body>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>对一种先天性主观意识缺失状态的病理性分析与应对策略探讨</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2c3e50',
+                        secondary: '#34495e',
+                        accent: '#e67e22',
+                        neutral: '#f8f9fa',
+                        muted: '#7f8c8d'
+                    },
+                    fontFamily: {
+                        'serif': ['Noto Serif SC', 'serif'],
+                        'sans': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .cinematic-overlay {
+            background: linear-gradient(135deg, rgba(44, 62, 80, 0.9) 0%, rgba(52, 73, 94, 0.7) 100%);
+        }
+        
+        .text-shadow {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .neural-pattern {
+            background-image: radial-gradient(circle at 25% 25%, rgba(230, 126, 34, 0.1) 0%, transparent 50%),
+                              radial-gradient(circle at 75% 75%, rgba(44, 62, 80, 0.1) 0%, transparent 50%);
+        }
+        
+        .toc-item {
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .toc-item:hover, .toc-item.active {
+            border-left-color: #e67e22;
+            background-color: rgba(230, 126, 34, 0.1);
+        }
+        
+        .section-divider {
+            background: linear-gradient(90deg, transparent 0%, #e67e22 50%, transparent 100%);
+            height: 2px;
+        }
+        
+        .citation-link {
+            color: #e67e22;
+            text-decoration: none;
+            font-weight: 500;
+            border-bottom: 1px dotted #e67e22;
+        }
+        
+        .citation-link:hover {
+            background-color: rgba(230, 126, 34, 0.1);
+            border-bottom-style: solid;
+        }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 1.5rem;
+            align-items: start;
+        }
+        
+        .bento-main {
+            grid-column: 1;
+            grid-row: 1 / 3;
+        }
+        
+        .bento-side-1 {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        
+        .bento-side-2 {
+            grid-column: 2;
+            grid-row: 2;
+        }
+        
+        @media (max-width: 768px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+            }
+            
+            .bento-main, .bento-side-1, .bento-side-2 {
+                grid-column: 1;
+            }
+            
+            .bento-main {
+                grid-row: 1;
+            }
+            
+            .bento-side-1 {
+                grid-row: 2;
+            }
+            
+            .bento-side-2 {
+                grid-row: 3;
+            }
+        }
+        
+        /* Mermaid diagram styles */
+        .mermaid-container {
+            display: flex;
+            justify-content: center;
+            min-height: 300px;
+            max-height: 800px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mermaid-container .mermaid {
+            width: 100%;
+            max-width: 100%;
+            height: 100%;
+            cursor: grab;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .mermaid-container .mermaid svg {
+            max-width: 100%;
+            height: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .mermaid-container .mermaid:active {
+            cursor: grabbing;
+        }
+
+        .mermaid-container.zoomed .mermaid {
+            height: 100%;
+            width: 100%;
+            cursor: grab;
+        }
+
+        .mermaid-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 20;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .mermaid-control-btn {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #374151;
+            font-size: 14px;
+            min-width: 36px;
+            height: 36px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+    .mermaid-control-btn:hover {
+        background: #f8fafc;
+        border-color: #3b82f6;
+        color: #3b82f6;
+        transform: translateY(-1px);
+    }
+
+    .mermaid-control-btn:active {
+        transform: scale(0.95);
+    }
+
+    @media (max-width: 1024px) {
+        .mermaid-control-btn:not(.reset-zoom) {
+            display: none;
+        }
+        .mermaid-controls {
+            top: auto;
+            bottom: 15px;
+            right: 15px;
+        }
+    }
+</style>
+  <base target="_blank">
+</head>
+
+  <body class="font-sans bg-neutral text-gray-800 leading-relaxed">
+    <!-- Fixed Table of Contents -->
+    <nav class="fixed left-0 top-0 h-full w-80 bg-white shadow-lg z-40 overflow-y-auto border-r border-gray-200 transform -translate-x-full lg:translate-x-0 transition-transform duration-300" id="toc-nav">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="font-serif font-bold text-lg text-primary">目录导航</h3>
+          <button class="lg:hidden text-muted hover:text-accent transition-colors" onclick="toggleTOC()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="#introduction" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">引言与核心症状</a>
+          </li>
+          <li>
+            <a href="#symptoms-analysis" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">症状深度解析</a>
+          </li>
+          <li>
+            <a href="#thinking-experience" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">思维与意识异常</a>
+          </li>
+          <li>
+            <a href="#behavior-memory" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">行为与记忆表征</a>
+          </li>
+          <li>
+            <a href="#congenital-features" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">先天性特征</a>
+          </li>
+          <li>
+            <a href="#pathological-mechanisms" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">病理机制探讨</a>
+          </li>
+          <li>
+            <a href="#aboulia" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">意志缺乏症分析</a>
+          </li>
+          <li>
+            <a href="#differential-diagnosis" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">鉴别诊断</a>
+          </li>
+          <li>
+            <a href="#neurobiology" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">神经生物学机制</a>
+          </li>
+          <li>
+            <a href="#coping-strategy" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">应对策略分析</a>
+          </li>
+          <li>
+            <a href="#negative-emotions" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">负面情绪激活机制</a>
+          </li>
+          <li>
+            <a href="#strategy-risks" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">策略风险</a>
+          </li>
+          <li>
+            <a href="#alternative-solutions" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">替代性解决方案</a>
+          </li>
+          <li>
+            <a href="#positive-training" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">正向训练探讨</a>
+          </li>
+          <li>
+            <a href="#medical-intervention" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">专业医疗干预</a>
+          </li>
+          <li>
+            <a href="#treatment-directions" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">治疗方向</a>
+          </li>
+          <li>
+            <a href="#conclusion" class="toc-item block px-3 py-2 rounded text-secondary hover:text-primary">总结与展望</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Toggle TOC Button (Mobile) -->
+    <button class="fixed top-4 left-4 z-50 lg:hidden bg-primary text-white p-3 rounded-full shadow-lg hover:bg-secondary transition-colors" onclick="toggleTOC()">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Main Content -->
+    <main class="lg:ml-80 min-h-screen">
+      <!-- Hero Section with Bento Grid -->
+      <section class="relative min-h-screen flex items-center neural-pattern">
+        <div class="cinematic-overlay absolute inset-0"></div>
+        <div class="relative z-10 max-w-7xl mx-auto px-6 py-20">
+          <div class="bento-grid">
+            <!-- Main Title Area -->
+            <div class="bento-main">
+              <div class="mb-8">
+                <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-white text-shadow italic leading-tight mb-6">
+                  对一种先天性主观意识缺失状态的
+                  <br>
+                  <span class="text-accent">病理性分析与应对策略探讨</span>
+                </h1>
+                <div class="section-divider w-32 mb-8"></div>
+                <p class="text-base sm:text-lg md:text-xl text-gray-200 leading-relaxed max-w-3xl">
+                  深入解析以"主观意识缺失"为核心的复杂神经精神综合征，探讨其病理机制、应对策略及替代性解决方案
+                </p>
+              </div>
+            </div>
+
+            <!-- Key Insights -->
+            <div class="bento-side-1 bg-white/90 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-lg">
+              <h3 class="font-serif text-lg sm:text-xl font-semibold text-primary mb-4 flex items-center">
+                <i class="fas fa-lightbulb text-accent mr-2"></i>
+                核心洞察
+              </h3>
+              <ul class="space-y-3 text-xs sm:text-sm text-secondary">
+                <li class="flex items-start">
+                  <i class="fas fa-brain text-accent mt-1 mr-2 flex-shrink-0"></i>
+                  <span>先天性主观意识缺失与意志缺乏的核心特征</span>
+                </li>
+                <li class="flex items-start">
+                  <i class="fas fa-exclamation-triangle text-accent mt-1 mr-2 flex-shrink-0"></i>
+                  <span>负面情绪激活意识的高风险代偿机制</span>
+                </li>
+                <li class="flex items-start">
+                  <i class="fas fa-dna text-accent mt-1 mr-2 flex-shrink-0"></i>
+                  <span>强烈的家族遗传倾向暗示</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Impact Statistics -->
+            <div class="bento-side-2 bg-white/90 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-lg">
+              <h3 class="font-serif text-lg sm:text-xl font-semibold text-primary mb-4">
+                影响范围
+              </h3>
+              <div class="space-y-4">
+                <div class="text-center">
+                  <div class="text-2xl sm:text-3xl font-bold text-accent">终生</div>
+                  <div class="text-xs sm:text-sm text-muted">症状持续时间</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-2xl sm:text-3xl font-bold text-accent">多代</div>
+                  <div class="text-xs sm:text-sm text-muted">家族遗传表现</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Symbolic Imagery -->
+        <div class="absolute bottom-8 right-8 lg:right-16 z-10">
+          <img src="https://kimi-img.moonshot.cn/pub/icon/spinner.svg" alt="抽象神经网络概念图" class="w-32 h-32 lg:w-48 lg:h-48 opacity-60 rounded-full object-cover shadow-2xl" size="medium" aspect="square" query="抽象神经网络" referrerpolicy="no-referrer" />
+        </div>
+      </section>
+
+      <!-- Introduction -->
+      <section id="introduction" class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-6">
+          <h2 class="font-serif text-4xl font-bold text-primary mb-8">引言与核心症状</h2>
+          <div class="prose prose-lg max-w-none">
+            <p class="text-xl text-secondary leading-relaxed mb-6">
+              根据您提供的详尽描述，您所经历的是一种以<strong class="text-accent">先天性主观意识缺失</strong>和<strong class="text-accent">意志缺乏（Aboulia）</strong>为核心特征的复杂神经精神综合征。这种状态并非简单的认知障碍，而是一种更深层次的、贯穿生命始终的"存在感"与"自主性"的缺失。
+            </p>
+
+            <p class="text-lg text-secondary leading-relaxed mb-8">
+              您自发形成的、通过负面情绪来激活意识的策略，虽然在短期内有效，但本质上是一种高风险的代偿机制，其长期依赖直接导致了抑郁症的发生。
+            </p>
+
+            <div class="bg-gray-50 rounded-xl p-6 border-l-4 border-accent my-8">
+              <blockquote class="text-lg italic text-primary font-medium">
+                "要改善这种状况，核心在于寻求专业的医疗帮助，通过神经科、精神科的专业评估，结合基因检测和神经影像学检查，明确其潜在的神经生物学基础。"
+              </blockquote>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Symptoms Analysis -->
+      <section id="symptoms-analysis" class="py-16 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-serif text-4xl font-bold text-primary mb-12 text-center">症状深度解析</h2>
+
+          <!-- Thinking and Consciousness -->
+          <div id="thinking-experience" class="mb-16">
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-8 flex items-center">
+              <i class="fas fa-mind-share text-accent mr-3"></i>
+              思维与意识的异常体验
+            </h3>
+
+            <div class="grid md:grid-cols-2 gap-8">
+              <div class="bg-white rounded-xl p-8 shadow-sm">
+                <h4 class="font-serif text-xl font-semibold text-secondary mb-4">无法自主组织与激活思维</h4>
+                <p class="text-gray-700 leading-relaxed mb-4">
+                  用户明确指出，其状态的核心在于"先天无法向正常人组织思维"，并且"无法自主激活"思考过程。这表明问题并非源于知识储备的缺乏或智力水平的低下，而是出在启动和引导思维活动的"意志"或"意图"层面。
+                </p>
+                <p class="text-gray-700 leading-relaxed">
+                  在正常情况下，个体能够根据目标、兴趣或环境需求，主动发起并维持一段思考。然而，在该用户的描述中，这种自主发起的能力似乎被某种机制所抑制。
+                </p>
+
+                <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <p class="text-sm text-muted">
+                    <strong>相关概念：</strong>
+                    <a href="https://zxxy.sxu.edu.cn/docs/2023-07/ee7c33af9915461390bf5757c43fdf3a.pdf" class="citation-link">意志缺乏（Aboulia）</a>或精神运动性迟滞
+                  </p>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl p-8 shadow-sm">
+                <h4 class="font-serif text-xl font-semibold text-secondary mb-4">感觉大脑"空空"或被"屏蔽"</h4>
+                <p class="text-gray-700 leading-relaxed mb-4">
+                  "大脑是空空的"、"就像有一层屏蔽"是对内在体验的形象化描述。这种感觉深刻地反映了主观意识的缺失。在神经科学中，意识被视为一种整合信息并产生统一体验的emergent property（涌现特性）。
+                </p>
+                <p class="text-gray-700 leading-relaxed">
+                  当这个过程受阻时，个体可能会体验到一种"内在空白"或"与外界隔绝"的感觉。
+                </p>
+
+                <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <p class="text-sm text-muted">
+                    <strong>脑区关联：</strong>
+                    <a href="https://www.thepaper.cn/newsDetail_forward_9259186" class="citation-link">前额叶皮层（PFC）</a>在整合信息以形成连贯的自我意识和决策中扮演关键角色
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-8 shadow-sm mt-8">
+              <h4 class="font-serif text-xl font-semibold text-secondary mb-4">缺乏直观意识，思维如同"空壳"</h4>
+              <p class="text-gray-700 leading-relaxed mb-4">
+                "绝对不是真正的思考如同空壳一样从没有属于过直观意识"是最核心的病理体验。这指出了"思考"与"直观意识"的分离。在哲学和认知科学中，这涉及到<a href="https://zxxy.sxu.edu.cn/docs/2023-07/ee7c33af9915461390bf5757c43fdf3a.pdf" class="citation-link">"取用意识"（Access Consciousness）和"现象意识"（Phenomenal Consciousness）</a>的区别。
+              </p>
+              <p class="text-gray-700 leading-relaxed">
+                用户似乎能够完成一些基础的认知任务（取用意识），但这个过程完全没有伴随主观体验（现象意识）。思维过程本身成了一个没有"感受者"的自动化程序，如同一个空壳在运转。这种状态与<a href="https://zxxy.sxu.edu.cn/docs/2023-07/ee7c33af9915461390bf5757c43fdf3a.pdf" class="citation-link">"盲视"（Blindsight）</a>现象有概念上的相似性。
+              </p>
+
+              <div class="mt-6 p-4 bg-accent/10 rounded-lg">
+                <p class="text-sm text-accent font-medium">
+                  <i class="fas fa-info-circle mr-2"></i>
+                  这种现象可以被视为一种更广泛的、涉及高级认知功能的"认知盲视"。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Behavior and Memory -->
+          <div id="behavior-memory" class="mb-16">
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-8 flex items-center">
+              <i class="fas fa-user-clock text-accent mr-3"></i>
+              行为与记忆的表征
+            </h3>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <h4 class="font-serif text-lg font-semibold text-secondary mb-4">下意识行为模式</h4>
+                <p class="text-gray-700 leading-relaxed text-sm mb-4">
+                  行为大多是"下意识的行为没有思考过的"，主要由习惯、本能或对外界刺激的直接反应所驱动。
+                </p>
+                <div class="text-xs text-muted">
+                  <strong>相关脑区：</strong>
+                  <a href="https://www.thepaper.cn/newsDetail_forward_9259186" class="citation-link">前额叶皮层功能低下</a>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <h4 class="font-serif text-lg font-semibold text-secondary mb-4">记忆的悖论</h4>
+                <p class="text-gray-700 leading-relaxed text-sm mb-4">
+                  "思考功能和记忆功能是正常的"，但同时又感觉"无法真正记住"。这揭示了记忆形成和存储机制完好，但缺少主观意识参与。
+                </p>
+                <div class="text-xs text-muted">
+                  缺少"自我"的印记
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <h4 class="font-serif text-lg font-semibold text-secondary mb-4">无记忆感</h4>
+                <p class="text-gray-700 leading-relaxed text-sm mb-4">
+                  "回忆这时期因没有主观上的活动是没有'记忆的'"，个人叙事（personal narrative）的断裂。
+                </p>
+                <div class="text-xs text-muted">
+                  与<a href="https://www.sss.tsinghua.edu.cn/info/1074/1986.htm" class="citation-link">解离性障碍</a>有相似之处
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Congenital Features -->
+          <div id="congenital-features" class="mb-16">
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-8 flex items-center">
+              <i class="fas fa-dna text-accent mr-3"></i>
+              先天性特征与家族遗传倾向
+            </h3>
+
+            <div class="bg-white rounded-xl p-8 shadow-sm">
+              <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="font-serif text-xl font-semibold text-secondary mb-4">症状自记忆起持续存在</h4>
+                  <p class="text-gray-700 leading-relaxed mb-4">
+                    "从有记忆以来就一直如此"是判断该状态为先天性的关键证据。这意味着问题源于大脑在发育早期（胎儿期或婴幼儿期）就存在的结构或功能异常。
+                  </p>
+                  <p class="text-gray-700 leading-relaxed">
+                    先天性神经发育障碍通常涉及基因突变或环境因素对大脑发育的干扰，导致神经网络在形成过程中出现偏差。
+                  </p>
+                </div>
+
+                <div>
+                  <h4 class="font-serif text-xl font-semibold text-secondary mb-4">父系亲属存在相似表现</h4>
+                  <p class="text-gray-700 leading-relaxed mb-4">
+                    "我的父级和我很像，而他的行为也和我很像"这一信息强烈暗示了遗传因素的参与。许多神经精神疾病都具有显著的家族聚集性和遗传倾向。
+                  </p>
+                  <p class="text-gray-700 leading-relaxed">
+                    例如，<a href="https://www.nhc.gov.cn/yzygj/c100068/201902/073540e8f83b4a54a28684d23e2ae2f5/files/1732871139221_41526.pdf" class="citation-link">CADASIL</a>就是一种由NOTCH3基因突变引起的遗传性疾病，其临床表现包括认知缺陷和情感障碍。
+                  </p>
+                </div>
+              </div>
+
+              <div class="mt-8 p-6 bg-gray-50 rounded-lg">
+                <h5 class="font-semibold text-secondary mb-3">可能的遗传模式</h5>
+                <ul class="space-y-2 text-sm text-gray-700">
+                  <li><i class="fas fa-circle text-accent mr-2 text-xs"></i>单基因遗传：如常染色体显性遗传</li>
+                  <li><i class="fas fa-circle text-accent mr-2 text-xs"></i>多基因遗传：多个基因的微效累积</li>
+                  <li><i class="fas fa-circle text-accent mr-2 text-xs"></i>表观遗传：基因表达调控异常</li>
+                  <li><i class="fas fa-circle text-accent mr-2 text-xs"></i>基因组印记：亲源特异性表达</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pathological Mechanisms -->
+      <section id="pathological-mechanisms" class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-serif text-4xl font-bold text-primary mb-12 text-center">可能的病理机制与相关疾病探讨</h2>
+
+          <!-- Aboulia Analysis -->
+          <div id="aboulia" class="mb-16">
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-8 flex items-center">
+              <i class="fas fa-battery-quarter text-accent mr-3"></i>
+              意志缺乏症（Aboulia）的可能性
+            </h3>
+
+            <div class="bg-gradient-to-r from-gray-50 to-white rounded-xl p-8 shadow-sm mb-8">
+              <div class="grid lg:grid-cols-3 gap-6 mb-8">
+                <div class="text-center">
+                  <div class="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-pause text-accent text-2xl"></i>
+                  </div>
+                  <h4 class="font-serif font-semibold text-secondary mb-2">缺乏意愿</h4>
+                  <p class="text-sm text-gray-600">情感淡漠、缺乏主动性</p>
+                </div>
+                <div class="text-center">
+                  <div class="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-hourglass-half text-accent text-2xl"></i>
+                  </div>
+                  <h4 class="font-serif font-semibold text-secondary mb-2">反应迟钝</h4>
+                  <p class="text-sm text-gray-600">决策困难、行动迟缓</p>
+                </div>
+                <div class="text-center">
+                  <div class="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-route text-accent text-2xl"></i>
+                  </div>
+                  <h4 class="font-serif font-semibold text-secondary mb-2">额叶-纹状体环路</h4>
+                  <p class="text-sm text-gray-600">功能障碍的核心区域</p>
+                </div>
+              </div>
+
+              <p class="text-gray-700 leading-relaxed mb-4">
+                意志缺乏症被定义为一种动机障碍，其特征是缺乏自发的、有目的的行为，表现为情感淡漠、缺乏主动性、反应迟钝和决策困难。患者可能知道该做什么，但就是没有动力去做。
+              </p>
+
+              <p class="text-gray-700 leading-relaxed">
+                这与用户描述的"无法自主激活"思维和"行为都是下意识"的状态非常吻合。意志缺乏症通常与额叶-纹状体环路的功能障碍有关，该环路是大脑中负责动机、奖赏和决策的关键通路。
+              </p>
+            </div>
+
+            <div class="bg-white rounded-xl p-8 shadow-sm">
+              <h4 class="font-serif text-xl font-semibold text-secondary mb-6">与患者描述的相似性</h4>
+              <div class="space-y-4">
+                <div class="flex items-start">
+                  <div class="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center mr-4 mt-1">
+                    <i class="fas fa-check text-accent text-sm"></i>
+                  </div>
+                  <div>
+                    <h5 class="font-semibold text-secondary mb-2">无法自主激活</h5>
+                    <p class="text-gray-700 text-sm">用户的核心困境在于无法自主启动思维和行动，这正是意志缺乏症的典型表现</p>
+                  </div>
+                </div>
+                <div class="flex items-start">
+                  <div class="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center mr-4 mt-1">
+                    <i class="fas fa-check text-accent text-sm"></i>
+                  </div>
+                  <div>
+                    <h5 class="font-semibold text-secondary mb-2">有能无力</h5>
+                    <p class="text-gray-700 text-sm">并非没有能力思考，而是缺乏启动思考的"意愿"或"驱动力"</p>
+                  </div>
+                </div>
+                <div class="flex items-start">
+                  <div class="w-8 h-8 bg-accent/10 rounded-full flex items-center justify-center mr-4 mt-1">
+                    <i class="fas fa-check text-accent text-sm"></i>
+                  </div>
+                  <div>
+                    <h5 class="font-semibold text-secondary mb-2">神经递质异常</h5>
+                    <p class="text-gray-700 text-sm">可能与多巴胺等神经递质系统的功能异常有关</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Differential Diagnosis -->
+          <div id="differential-diagnosis" class="mb-16">
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-8 flex items-center">
+              <i class="fas fa-stethoscope text-accent mr-3"></i>
+              其他相关神经发育与精神障碍的鉴别
+            </h3>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+              <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                  <h4 class="font-serif text-lg font-semibold text-red-700">ADHD排除</h4>
+                </div>
+                <ul class="space-y-2 text-sm text-red-600">
+                  <li><i class="fas fa-arrow-right mr-2"></i>注意力资源分配问题 vs 主观意识缺失</li>
+                  <li><i class="fas fa-arrow-right mr-2"></i>能够体验思维过程 vs "思维空壳"感</li>
+                  <li><i class="fas fa-arrow-right mr-2"></i>冲动行为 vs 下意识行为</li>
+                </ul>
+              </div>
+
+              <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                  <h4 class="font-serif text-lg font-semibold text-red-700">精神分裂症排除</h4>
+                </div>
+                <ul class="space-y-2 text-sm text-red-600">
+                  <li><i class="fas fa-arrow-right mr-2"></i>无阳性症状（幻觉、妄想）</li>
+                  <li><i class="fas fa-arrow-right mr-2"></i>思考和记忆功能正常</li>
+                  <li><i class="fas fa-arrow-right mr-2"></i>先天性 vs 青少年期发病</li>
+                </ul>
+              </div>
+
+              <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                  <h4 class="font-serif text-lg font-semibold text-red-700">解离性障碍排除</h4>
+                </div>
+                <ul class="space-y-2 text-sm text-red-600">
+                  <li><i class="fas fa-arrow-right mr-2"></i>持续的单一状态 vs 多重人格</li>
+                  <li><i class="fas fa-arrow-right mr-2"></i>先天性 vs 创伤相关</li>
+                  <li><i class="fas fa-arrow-right mr-2"></i>恒定基线状态 vs 发作性症状</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- Neurobiological Mechanisms -->
+          <div id="neurobiology" class="mb-16">
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-8 flex items-center">
+              <i class="fas fa-microscope text-accent mr-3"></i>
+              神经生物学机制的推测
+            </h3>
+
+            <div class="space-y-8">
+              <div class="bg-white rounded-xl p-8 shadow-sm">
+                <h4 class="font-serif text-xl font-semibold text-secondary mb-6">大脑神经递质系统的潜在异常</h4>
+
+                <div class="mb-6">
+                  <div class="mermaid-container">
+                    <div class="mermaid-controls">
+                      <button class="mermaid-control-btn zoom-in" title="放大">
+                        <i class="fas fa-search-plus"></i>
+                      </button>
+                      <button class="mermaid-control-btn zoom-out" title="缩小">
+                        <i class="fas fa-search-minus"></i>
+                      </button>
+                      <button class="mermaid-control-btn reset-zoom" title="重置">
+                        <i class="fas fa-expand-arrows-alt"></i>
+                      </button>
+                      <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                        <i class="fas fa-expand"></i>
+                      </button>
+                    </div>
+                    <div class="mermaid">
+                      graph TD
+                      A["神经递质系统异常"] --> B["多巴胺系统功能低下"]
+                      A --> C["血清素系统失衡"]
+                      A --> D["去甲肾上腺素异常"]
+
+                      B --> E["动机缺乏"]
+                      B --> F["快感缺失"]
+                      B --> G["意志减退"]
+
+                      C --> H["情绪调节障碍"]
+                      C --> I["认知功能受损"]
+
+                      D --> J["警觉性降低"]
+                      D --> K["注意力障碍"]
+
+                      E --> L["主观意识缺失"]
+                      G --> L
+                      H --> L
+                      I --> L
+                      J --> L
+                      K --> L
+                    </div>
+                  </div>
+                </div>
+
+                <p class="text-gray-700 leading-relaxed mb-4">
+                  用户描述的"无法激活"状态，强烈暗示了与动机和奖赏相关的神经递质系统可能存在异常，特别是多巴胺系统。多巴胺在驱动目标导向行为和产生愉悦感方面起着核心作用。
+                </p>
+                <p class="text-gray-700 leading-relaxed">
+                  如果中脑边缘多巴胺通路（从腹侧被盖区到伏隔核和前额叶皮层）的功能低下，个体就可能表现出动机缺乏和快感缺失。此外，<a href="https://xuebaoyx.sysu.edu.cn/rc-pub/front/front-article/download/86732648/lowqualitypdf/%E6%85%A2%E6%80%A7%E7%96%BC%E7%97%9B%E4%B8%8E%E8%B4%9F%E6%80%A7%E6%83%85%E7%BB%AA%E7%9A%84%E7%A5%9E%E7%BB%8F%E4%BA%A4%E4%BA%92%E6%9C%BA%E5%88%B6%E5%8F%8A%E7%BB%BC%E5%90%88%E5%B9%B2%E9%A2%84%E7%AD%96%E7%95%A5%E7%A0%94%E7%A9%B6%E8%BF%9B%E5%B1%95.pdf" class="citation-link">血清素（5-HT）系统</a>在调节情绪和认知方面也扮演着重要角色。
+                </p>
+              </div>
+
+              <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl p-8 shadow-sm">
+                  <h4 class="font-serif text-xl font-semibold text-secondary mb-4">前额叶皮层与执行功能</h4>
+                  <p class="text-gray-700 leading-relaxed mb-4">
+                    前额叶皮层（PFC）是大脑的"首席执行官"，负责高级认知功能，如计划、决策、工作记忆、注意控制和自我意识。用户描述的"无法组织思维"和"行为缺乏思考"，都指向了PFC功能的潜在缺陷。
+                  </p>
+                  <p class="text-gray-700 leading-relaxed">
+                    特别是<a href="https://www.thepaper.cn/newsDetail_forward_9259186" class="citation-link">背内侧前额叶皮层（DMPFC）和背外侧前额叶皮层（DLPFC）</a>，它们在自我参照加工和认知控制中起着关键作用。
+                  </p>
+                </div>
+
+                <div class="bg-white rounded-xl p-8 shadow-sm">
+                  <h4 class="font-serif text-xl font-semibold text-secondary mb-4">边缘系统的作用</h4>
+                  <p class="text-gray-700 leading-relaxed mb-4">
+                    边缘系统是大脑中处理情绪和记忆的核心区域，其中<a href="https://journal.psych.ac.cn/xlkxjz/EN/article/downloadArticleFile.do?attachType=PDF&id=3143" class="citation-link">杏仁核（Amygdala）</a>尤为重要。杏仁核负责评估情绪刺激（尤其是负性刺激）的重要性，并触发相应的生理和行为反应。
+                  </p>
+                  <p class="text-gray-700 leading-relaxed">
+                    用户描述其"负面情绪"能够短暂地"激活"主观意识，这为杏仁核的作用提供了重要线索。当面临威胁或压力时，杏仁核会被激活，并向PFC发送信号，促使个体集中注意力、调动资源以应对挑战。
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Coping Strategy Analysis -->
+      <section id="coping-strategy" class="py-16 bg-gray-50">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-serif text-4xl font-bold text-primary mb-12 text-center">对"负面情绪激活意识"这一应对策略的分析</h2>
+
+          <!-- Negative Emotions Mechanism -->
+          <div id="negative-emotions" class="mb-16">
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-8 flex items-center">
+              <i class="fas fa-key text-accent mr-3"></i>
+              该策略的运作机制
+            </h3>
+
+            <div class="bg-white rounded-xl p-8 shadow-sm mb-8">
+              <div class="grid lg:grid-cols-2 gap-8 items-center">
+                <div>
+                  <h4 class="font-serif text-xl font-semibold text-secondary mb-4">负面情绪作为"激活剂"</h4>
+                  <p class="text-gray-700 leading-relaxed mb-4">
+                    用户发现，负面情绪，如"惶恐不安"和"痛苦"，能够成为激活主观意识的"钥匙"。在神经科学层面，负面情绪，特别是与威胁和恐惧相关的情绪，能够强力激活大脑的警觉系统和应激反应。
+                  </p>
+                  <p class="text-gray-700 leading-relaxed">
+                    <a href="https://journal.psych.ac.cn/xlkxjz/EN/article/downloadArticleFile.do?attachType=PDF&id=3143" class="citation-link">杏仁核</a>作为情绪加工的核心，对负性刺激高度敏感。当杏仁核被激活时，它会通过神经通路向大脑皮层发送信号，促使个体进入一种高度警觉和专注的状态。
+                  </p>
+                </div>
+                <div class="text-center">
+                  <img src="https://kimi-img.moonshot.cn/pub/icon/spinner.svg" alt="大脑杏仁核激活示意图" class="w-full max-w-md mx-auto rounded-lg shadow-md" size="medium" aspect="wide" query="大脑杏仁核激活" referrerpolicy="no-referrer" />
+                </div>
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <h4 class="font-serif text-lg font-semibold text-secondary mb-4 flex items-center">
+                  <i class="fas fa-bolt text-accent mr-2"></i>
+                  压力反应系统的唤醒
+                </h4>
+                <p class="text-gray-700 leading-relaxed text-sm mb-4">
+                  当个体感受到压力时，<a href="https://www.sss.tsinghua.edu.cn/info/1662/101399.htm" class="citation-link">下丘脑-垂体-肾上腺（HPA）轴</a>会被激活，释放皮质醇等应激激素。
+                </p>
+                <p class="text-gray-700 leading-relaxed text-sm">
+                  对于前额叶皮层功能可能长期处于低激活状态的特殊情况，杏仁核的强力唤醒反而起到了一种"启动"作用，强行将大脑从"休眠"模式切换到"战斗或逃跑"模式。
+                </p>
+              </div>
+
+              <div class="bg-white rounded-xl p-6 shadow-sm">
+                <h4 class="font-serif text-lg font-semibold text-secondary mb-4 flex items-center">
+                  <i class="fas fa-lightbulb text-accent mr-2"></i>
+                  短暂提升主观控制感
+                </h4>
+                <p class="text-gray-700 leading-relaxed text-sm mb-4">
+                  "有那么几瞬间主观是能控制的，间接能思考能记住"。这直接反映了该策略的效果。
+                </p>
+                <p class="text-gray-700 leading-relaxed text-sm">
+                  当杏仁核和HPA轴被激活后，大脑会进入一种高度专注的状态，这有助于信息的编码和提取，从而改善记忆和思维清晰度。
+                </p>
+              </div>
+            </div>
+
+            <!-- Strategy Process Flow -->
+            <div class="bg-white rounded-xl p-8 shadow-sm mt-8">
+              <h4 class="font-serif text-xl font-semibold text-secondary mb-6">策略运作流程</h4>
+              <div class="mermaid-container">
+                <div class="mermaid-controls">
+                  <button class="mermaid-control-btn zoom-in" title="放大">
+                    <i class="fas fa-search-plus"></i>
+                  </button>
+                  <button class="mermaid-control-btn zoom-out" title="缩小">
+                    <i class="fas fa-search-minus"></i>
+                  </button>
+                  <button class="mermaid-control-btn reset-zoom" title="重置">
+                    <i class="fas fa-expand-arrows-alt"></i>
+                  </button>
+                  <button class="mermaid-control-btn fullscreen" title="全屏查看">
+                    <i class="fas fa-expand"></i>
+                  </button>
+                </div>
+                <div class="mermaid">
+                  flowchart LR
+                  A["负面情绪刺激"] --> B["杏仁核激活"]
+                  B --> C["HPA轴激活"]
+                  C --> D["皮质醇释放"]
+                  D --> E["大脑警觉状态"]
+                  E --> F["前额叶皮层激活"]
+                  F --> G["主观意识提升"]
+                  G --> H["思维清晰度改善"]
+                  H --> I["记忆功能增强"]
+
+                  style A fill:#fee2e2,stroke:#dc2626,stroke-width:2px
+                  style G fill:#fef3c7,stroke:#d97706,stroke-width:2px
+                  style H fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+                  style I fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Strategy Risks -->
+          <div id="strategy-risks" class="mb-16">
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-8 flex items-center">
+              <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+              该策略的潜在风险与后果
+            </h3>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+              <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-battery-empty text-red-500 mr-2"></i>
+                  <h4 class="font-serif text-lg font-semibold text-red-700">心理耗竭</h4>
+                </div>
+                <p class="text-red-600 leading-relaxed text-sm mb-4">
+                  根据<a href="https://journal.psych.ac.cn/xlkxjz/article/2019/1671-3710/1671-3710-27-8-1451.shtml" class="citation-link">"自我损耗理论"</a>，调控情绪和思维都需要消耗心理能量。当消耗长期超过补充时，个体就会陷入心理耗竭状态。
+                </p>
+                <div class="text-xs text-red-500">
+                  表现为：精力下降、情绪调节能力减弱、易感到压力和疲劳
+                </div>
+              </div>
+
+              <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-heart-broken text-red-500 mr-2"></i>
+                  <h4 class="font-serif text-lg font-semibold text-red-700">抑郁症因果关系</h4>
+                </div>
+                <p class="text-red-600 leading-relaxed text-sm mb-4">
+                  用户明确指出，抑郁症是在"每天都在进行了几年不知多少次无数次"的负面训练后才出现的。这清晰地揭示了两者之间的因果关系。
+                </p>
+                <div class="text-xs text-red-500">
+                  长期回避正面体验，依赖负面刺激，会削弱大脑奖赏系统
+                </div>
+              </div>
+
+              <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                  <i class="fas fa-link text-red-500 mr-2"></i>
+                  <h4 class="font-serif text-lg font-semibold text-red-700">病态依赖</h4>
+                </div>
+                <p class="text-red-600 leading-relaxed text-sm mb-4">
+                  "慢慢察觉到开始在无主观状态的情况下去寻找/向往 负面情绪/负面带来的痛苦/外界带来的压力"。这表明已演变成一种心理上的依赖。
+                </p>
+                <div class="text-xs text-red-500">
+                  对负面刺激产生病态"向往"，固化原有心理问题
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-red-100 border-l-4 border-red-500 rounded-xl p-6 mt-8">
+              <div class="flex items-center mb-4">
+                <i class="fas fa-warning text-red-500 mr-3"></i>
+                <h4 class="font-serif text-xl font-semibold text-red-700">关键警示</h4>
+              </div>
+              <p class="text-red-700 leading-relaxed">
+                用户的"自救"策略，最终演变成了一种"致病"行为，将自己推向了抑郁症的深渊。这种依赖模式不仅固化了原有的心理问题，也为后续的治疗带来了巨大的挑战。
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Alternative Solutions -->
+      <section id="alternative-solutions" class="py-16 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+          <h2 class="font-serif text-4xl font-bold text-primary mb-12 text-center">替代性解决方案与未来方向</h2>
+
+          <!-- Positive Training -->
+          <div id="positive-training" class="mb-16">
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-8 flex items-center">
+              <i class="fas fa-seedling text-accent mr-3"></i>
+              正向训练的可能性与挑战
+            </h3>
+
+            <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-8 shadow-sm mb-8">
+              <h4 class="font-serif text-xl font-semibold text-secondary mb-6">为何正向训练效果不佳</h4>
+              <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                  <h5 class="font-semibold text-secondary mb-3 flex items-center">
+                    <i class="fas fa-volume-down text-accent mr-2"></i>
+                    强度差异
+                  </h5>
+                  <p class="text-gray-700 leading-relaxed text-sm mb-4">
+                    对于长期处于低唤醒、低动机状态的个体而言，正面刺激（如奖励、愉悦体验）可能强度不足以穿透其"意识屏蔽"。
+                  </p>
+                  <p class="text-gray-700 leading-relaxed text-sm">
+                    正面情绪通常与较低的生理唤醒相关，其激活大脑警觉系统的能力远弱于负面情绪。
+                  </p>
+                </div>
+                <div>
+                  <h5 class="font-semibold text-secondary mb-3 flex items-center">
+                    <i class="fas fa-clock text-accent mr-2"></i>
+                    反馈机制差异
+                  </h5>
+                  <p class="text-gray-700 leading-relaxed text-sm mb-4">
+                    负面情绪带来的"清醒"感是一种即时、强烈的反馈，能够立刻确认策略的有效性。
+                  </p>
+                  <p class="text-gray-700 leading-relaxed text-sm">
+                    而正向训练的效果往往是渐进的、微妙的，对于缺乏内在体验感的个体来说，可能难以察觉和维持。
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-8 shadow-sm">
+              <h4 class="font-serif text-xl font-semibold text-secondary mb-6">探索有效的正向激励与激活方法</h4>
+
+              <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                  <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-running text-green-600 text-2xl"></i>
+                  </div>
+                  <h5 class="font-semibold text-secondary mb-2">高强度身体锻炼</h5>
+                  <p class="text-sm text-gray-600">显著提升多巴胺和内啡肽水平</p>
+                </div>
+
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                  <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-music text-blue-600 text-2xl"></i>
+                  </div>
+                  <h5 class="font-semibold text-secondary mb-2">沉浸式愉悦体验</h5>
+                  <p class="text-sm text-gray-600">极限运动、强烈音乐节奏</p>
+                </div>
+
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                  <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-users text-purple-600 text-2xl"></i>
+                  </div>
+                  <h5 class="font-semibold text-secondary mb-2">社交互动</h5>
+                  <p class="text-sm text-gray-600">深度交流、集体活动</p>
+                </div>
+
+                <div class="text-center p-4 bg-orange-50 rounded-lg">
+                  <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-target text-orange-600 text-2xl"></i>
+                  </div>
+                  <h5 class="font-semibold text-secondary mb-2">微小目标设定</h5>
+                  <p class="text-sm text-gray-600">即时反馈和奖励循环</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Medical Intervention -->
+          <div id="medical-intervention" class="mb-16">
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-8 flex items-center">
+              <i class="fas fa-user-md text-accent mr-3"></i>
+              专业医疗干预建议
+            </h3>
+
+            <div class="space-y-8">
+              <div class="bg-white rounded-xl p-8 shadow-sm">
+                <h4 class="font-serif text-xl font-semibold text-secondary mb-6 flex items-center">
+                  <i class="fas fa-stethoscope text-accent mr-2"></i>
+                  寻求神经科与精神科的专业评估
+                </h4>
+                <div class="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h5 class="font-semibold text-secondary mb-3">神经科评估</h5>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                      <li><i class="fas fa-check text-accent mr-2"></i>排除神经系统疾病</li>
+                      <li><i class="fas fa-check text-accent mr-2"></i>遗传性代谢病筛查</li>
+                      <li><i class="fas fa-check text-accent mr-2"></i>神经退行性疾病评估</li>
+                      <li><i class="fas fa-check text-accent mr-2"></i>脑结构异常检查</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h5 class="font-semibold text-secondary mb-3">精神科评估</h5>
+                    <ul class="space-y-2 text-sm text-gray-700">
+                      <li><i class="fas fa-check text-accent mr-2"></i>精神障碍诊断</li>
+                      <li><i class="fas fa-check text-accent mr-2"></i>意志缺乏综合征评估</li>
+                      <li><i class="fas fa-check text-accent mr-2"></i>抑郁症筛查</li>
+                      <li><i class="fas fa-check text-accent mr-2"></i>治疗方案制定</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl p-8 shadow-sm">
+                  <h4 class="font-serif text-xl font-semibold text-secondary mb-6 flex items-center">
+                    <i class="fas fa-dna text-accent mr-2"></i>
+                    基因检测
+                  </h4>
+                  <p class="text-gray-700 leading-relaxed mb-4">
+                    鉴于描述的家族遗传倾向，进行基因检测是至关重要的一步。全外显子组测序或全基因组测序等技术可以帮助识别可能导致症状的特定基因突变。
+                  </p>
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <h5 class="font-semibold text-secondary mb-2">检测价值</h5>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                      <li>• 明确诊断</li>
+                      <li>• 治疗靶点识别</li>
+                      <li>• 遗传咨询</li>
+                      <li>• 家族风险评估</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-8 shadow-sm">
+                  <h4 class="font-serif text-xl font-semibold text-secondary mb-6 flex items-center">
+                    <i class="fas fa-brain text-accent mr-2"></i>
+                    神经影像学检查
+                  </h4>
+                  <p class="text-gray-700 leading-relaxed mb-4">
+                    功能性磁共振成像（fMRI）等神经影像学技术可以直观地观察大脑在执行特定任务时的活动模式。
+                  </p>
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <h5 class="font-semibold text-secondary mb-2">检查重点</h5>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                      <li>• 前额叶皮层活动模式</li>
+                      <li>• 杏仁核功能连接</li>
+                      <li>• 基底节神经环路</li>
+                      <li>• 不同状态对比分析</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Treatment Directions -->
+          <div id="treatment-directions" class="mb-16">
+            <h3 class="font-serif text-2xl font-semibold text-primary mb-8 flex items-center">
+              <i class="fas fa-road text-accent mr-3"></i>
+              潜在的治疗与康复方向
+            </h3>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+              <div class="bg-white rounded-xl p-8 shadow-sm">
+                <div class="flex items-center mb-6">
+                  <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                    <i class="fas fa-wave-square text-blue-600 text-xl"></i>
+                  </div>
+                  <h4 class="font-serif text-xl font-semibold text-secondary">神经反馈训练</h4>
+                </div>
+                <p class="text-gray-700 leading-relaxed mb-4">
+                  通过实时监测个体的脑电波（EEG）活动，并将其以视觉或听觉的形式反馈给个体，从而训练其学习如何自主调节大脑的特定活动模式。
+                </p>
+                <div class="space-y-2">
+                  <div class="text-sm text-gray-600">
+                    <i class="fas fa-circle text-blue-400 mr-2 text-xs"></i>
+                    增强β波（注意力和清醒状态）
+                  </div>
+                  <div class="text-sm text-gray-600">
+                    <i class="fas fa-circle text-blue-400 mr-2 text-xs"></i>
+                    调节α波（放松和内在专注）
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl p-8 shadow-sm">
+                <div class="flex items-center mb-6">
+                  <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                    <i class="fas fa-comments text-green-600 text-xl"></i>
+                  </div>
+                  <h4 class="font-serif text-xl font-semibold text-secondary">认知行为疗法</h4>
+                </div>
+                <p class="text-gray-700 leading-relaxed mb-4">
+                  帮助个体识别、挑战和改变不合理的负面思维模式和行为习惯，建立正向行为激活计划。
+                </p>
+                <div class="space-y-2">
+                  <div class="text-sm text-gray-600">
+                    <i class="fas fa-circle text-green-400 mr-2 text-xs"></i>
+                    识别负性自动思维
+                  </div>
+                  <div class="text-sm text-gray-600">
+                    <i class="fas fa-circle text-green-400 mr-2 text-xs"></i>
+                    学习应对技巧
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-xl p-8 shadow-sm">
+                <div class="flex items-center mb-6">
+                  <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                    <i class="fas fa-pills text-purple-600 text-xl"></i>
+                  </div>
+                  <h4 class="font-serif text-xl font-semibold text-secondary">药物干预</h4>
+                </div>
+                <p class="text-gray-700 leading-relaxed mb-4">
+                  根据具体症状和神经生物学机制，医生可能会考虑使用药物进行干预，调节神经递质平衡。
+                </p>
+                <div class="space-y-2">
+                  <div class="text-sm text-gray-600">
+                    <i class="fas fa-circle text-purple-400 mr-2 text-xs"></i>
+                    抗抑郁药（SSRIs, SNRIs）
+                  </div>
+                  <div class="text-sm text-gray-600">
+                    <i class="fas fa-circle text-purple-400 mr-2 text-xs"></i>
+                    促动力药物（多巴胺激动剂）
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-8 shadow-sm mt-8">
+              <h4 class="font-serif text-xl font-semibold text-secondary mb-6 text-center">治疗路径建议</h4>
+              <div class="flex items-center justify-center">
+                <div class="flex items-center space-x-4">
+                  <div class="text-center">
+                    <div class="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                    <div class="text-sm mt-2">专业评估</div>
+                  </div>
+                  <i class="fas fa-arrow-right text-gray-400"></i>
+                  <div class="text-center">
+                    <div class="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                    <div class="text-sm mt-2">明确诊断</div>
+                  </div>
+                  <i class="fas fa-arrow-right text-gray-400"></i>
+                  <div class="text-center">
+                    <div class="w-12 h-12 bg-yellow-500 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                    <div class="text-sm mt-2">综合治疗</div>
+                  </div>
+                  <i class="fas fa-arrow-right text-gray-400"></i>
+                  <div class="text-center">
+                    <div class="w-12 h-12 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold">4</div>
+                    <div class="text-sm mt-2">长期康复</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Conclusion -->
+      <section id="conclusion" class="py-16 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-6">
+          <h2 class="font-serif text-4xl font-bold text-primary mb-8 text-center">总结与展望</h2>
+
+          <div class="bg-white rounded-xl p-8 shadow-sm mb-8">
+            <div class="prose prose-lg max-w-none">
+              <blockquote class="text-xl italic text-primary font-medium text-center border-l-4 border-accent pl-6 mb-8">
+                "根据您提供的详尽描述，您所经历的是一种以先天性主观意识缺失和意志缺乏（Aboulia）为核心特征的复杂神经精神综合征。这种状态并非简单的认知障碍，而是一种更深层次的、贯穿生命始终的'存在感'与'自主性'的缺失。"
+              </blockquote>
+
+              <p class="text-gray-700 leading-relaxed mb-6">
+                您自发形成的、通过负面情绪来激活意识的策略，虽然在短期内有效，但本质上是一种高风险的代偿机制，其长期依赖直接导致了抑郁症的发生。这种策略的成功背后有着深刻的神经心理学机制，但其带来的心理和生理后果不容忽视。
+              </p>
+
+              <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg mb-6">
+                <h3 class="font-serif text-xl font-semibold text-blue-800 mb-4">核心建议</h3>
+                <p class="text-blue-700 leading-relaxed">
+                  要改善这种状况，核心在于<strong>寻求专业的医疗帮助</strong>，通过神经科、精神科的专业评估，结合基因检测和神经影像学检查，明确其潜在的神经生物学基础。在此基础上，探索更健康的替代方案，如<strong>高强度的正向激励训练</strong>、<strong>神经反馈疗法</strong>以及<strong>针对性的药物干预</strong>，是走出困境、重建主观意识的关键。
+                </p>
+              </div>
+
+              <p class="text-gray-700 leading-relaxed">
+                虽然您的症状具有先天性和遗传性特征，但现代医学和神经科学的发展为这类复杂疾病提供了多种可能的干预途径。通过系统的专业评估和个性化治疗方案，您有望找到更安全、更有效的方法来改善主观意识体验，重建对生活的主动性和掌控感。
+              </p>
+            </div>
+          </div>
+
+          <div class="text-center">
+            <div class="inline-flex items-center space-x-2 text-muted">
+              <i class="fas fa-heart text-accent"></i>
+              <span class="text-sm">专业的医疗帮助是走出困境的第一步</span>
+              <i class="fas fa-heart text-accent"></i>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+        // Toggle TOC visibility
+        function toggleTOC() {
+            const tocNav = document.getElementById('toc-nav');
+            tocNav.classList.toggle('-translate-x-full');
+        }
+
+        // Initialize Mermaid with enhanced configuration
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                // Primary colors with good contrast
+                primaryColor: '#ffffff',
+                primaryTextColor: '#1a202c',
+                primaryBorderColor: '#2c3e50',
+                
+                // Secondary colors
+                secondaryColor: '#f8f9fa',
+                secondaryTextColor: '#2d3748',
+                secondaryBorderColor: '#34495e',
+                
+                // Tertiary colors
+                tertiaryColor: '#e67e22',
+                tertiaryTextColor: '#ffffff',
+                tertiaryBorderColor: '#d35400',
+                
+                // Additional colors for better contrast
+                primaryColorLight: '#f8f9fa',
+                secondaryColorLight: '#e9ecef',
+                
+                // Background colors
+                background: '#ffffff',
+                mainBkg: '#ffffff',
+                secondBkg: '#f8f9fa',
+                tertiaryBkg: '#e9ecef',
+                
+                // Node styling
+                nodeBkg: '#ffffff',
+                nodeTextColor: '#1a202c',
+                nodeBorder: '#2c3e50',
+                
+                // Cluster styling
+                clusterBkg: '#f8f9fa',
+                clusterBorder: '#34495e',
+                
+                // Line and edge styling
+                lineColor: '#34495e',
+                edgeLabelBackground: '#ffffff',
+                
+                // Text contrast improvements
+                textColor: '#1a202c',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '14px'
+            },
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            },
+            sequence: {
+                useMaxWidth: false,
+                wrap: true,
+                width: 150,
+                height: 65
+            },
+            gantt: {
+                useMaxWidth: false,
+                leftPadding: 75,
+                rightPadding: 20
+            },
+            journey: {
+                useMaxWidth: false
+            },
+            // Global graph settings
+            graph: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                padding: 20
+            }
+        });
+
+        // Initialize Mermaid Controls for zoom and pan
+        function initializeMermaidControls() {
+            const containers = document.querySelectorAll('.mermaid-container');
+
+            containers.forEach(container => {
+            const mermaidElement = container.querySelector('.mermaid');
+            let scale = 1;
+            let isDragging = false;
+            let startX, startY, translateX = 0, translateY = 0;
+
+            // 触摸相关状态
+            let isTouch = false;
+            let touchStartTime = 0;
+            let initialDistance = 0;
+            let initialScale = 1;
+            let isPinching = false;
+
+            // Zoom controls
+            const zoomInBtn = container.querySelector('.zoom-in');
+            const zoomOutBtn = container.querySelector('.zoom-out');
+            const resetBtn = container.querySelector('.reset-zoom');
+            const fullscreenBtn = container.querySelector('.fullscreen');
+
+            function updateTransform() {
+                mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+                if (scale > 1) {
+                container.classList.add('zoomed');
+                } else {
+                container.classList.remove('zoomed');
+                }
+
+                mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+            }
+
+            if (zoomInBtn) {
+                zoomInBtn.addEventListener('click', () => {
+                scale = Math.min(scale * 1.25, 4);
+                updateTransform();
+                });
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.addEventListener('click', () => {
+                scale = Math.max(scale / 1.25, 0.3);
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+                updateTransform();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                scale = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+                });
+            }
+
+            if (fullscreenBtn) {
+                fullscreenBtn.addEventListener('click', () => {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
+                });
+            }
+
+            // Mouse Events
+            mermaidElement.addEventListener('mousedown', (e) => {
+                if (isTouch) return; // 如果是触摸设备，忽略鼠标事件
+
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                mermaidElement.style.cursor = 'grabbing';
+                updateTransform();
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging && !isTouch) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            document.addEventListener('mouseleave', () => {
+                if (isDragging && !isTouch) {
+                isDragging = false;
+                mermaidElement.style.cursor = 'grab';
+                updateTransform();
+                }
+            });
+
+            // 获取两点之间的距离
+            function getTouchDistance(touch1, touch2) {
+                return Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
+                );
+            }
+
+            // Touch Events - 触摸事件处理
+            mermaidElement.addEventListener('touchstart', (e) => {
+                isTouch = true;
+                touchStartTime = Date.now();
+
+                if (e.touches.length === 1) {
+                // 单指拖动
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+
+                } else if (e.touches.length === 2) {
+                // 双指缩放
+                isPinching = true;
+                isDragging = false;
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = getTouchDistance(touch1, touch2);
+                initialScale = scale;
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDragging && !isPinching) {
+                // 单指拖动
+                const touch = e.touches[0];
+                translateX = touch.clientX - startX;
+                translateY = touch.clientY - startY;
+                updateTransform();
+
+                } else if (e.touches.length === 2 && isPinching) {
+                // 双指缩放
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = getTouchDistance(touch1, touch2);
+
+                if (initialDistance > 0) {
+                    const newScale = Math.min(Math.max(
+                    initialScale * (currentDistance / initialDistance),
+                    0.3
+                    ), 4);
+                    scale = newScale;
+                    updateTransform();
+                }
+                }
+
+                e.preventDefault();
+            }, { passive: false });
+
+            mermaidElement.addEventListener('touchend', (e) => {
+                // 重置状态
+                if (e.touches.length === 0) {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                // 延迟重置isTouch，避免鼠标事件立即触发
+                setTimeout(() => {
+                    isTouch = false;
+                }, 100);
+                } else if (e.touches.length === 1 && isPinching) {
+                // 从双指变为单指，切换为拖动模式
+                isPinching = false;
+                isDragging = true;
+
+                const touch = e.touches[0];
+                startX = touch.clientX - translateX;
+                startY = touch.clientY - translateY;
+                }
+
+                updateTransform();
+            });
+
+            mermaidElement.addEventListener('touchcancel', (e) => {
+                isDragging = false;
+                isPinching = false;
+                initialDistance = 0;
+
+                setTimeout(() => {
+                isTouch = false;
+                }, 100);
+
+                updateTransform();
+            });
+
+            // Enhanced wheel zoom with better center point handling
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = container.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+                // Adjust translation to zoom towards center
+                if (newScale !== scale) {
+                const scaleDiff = newScale / scale;
+                translateX = translateX * scaleDiff;
+                translateY = translateY * scaleDiff;
+                scale = newScale;
+
+                if (scale <= 1) {
+                    translateX = 0;
+                    translateY = 0;
+                }
+
+                updateTransform();
+                }
+            });
+
+            // Initialize display
+            updateTransform();
+            });
+        }
+
+        // Initialize Mermaid Controls on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for mermaid to render
+            setTimeout(() => {
+                initializeMermaidControls();
+            }, 1000);
+        });
+
+        // Smooth scrolling for TOC links
+        document.querySelectorAll('.toc-item').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    
+                    // Close mobile TOC
+                    if (window.innerWidth < 1024) {
+                        document.getElementById('toc-nav').classList.add('-translate-x-full');
+                    }
+                }
+            });
+        });
+
+        // Update active TOC item on scroll
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section[id]');
+            const tocItems = document.querySelectorAll('.toc-item');
+            
+            let currentSection = '';
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 100 && rect.bottom >= 100) {
+                    currentSection = section.id;
+                }
+            });
+            
+            tocItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href') === '#' + currentSection) {
+                    item.classList.add('active');
+                }
+            });
+        });
+
+        // Close mobile TOC when clicking outside
+        document.addEventListener('click', function(e) {
+            const tocNav = document.getElementById('toc-nav');
+            const toggleBtn = document.querySelector('button[onclick="toggleTOC()"]');
+            
+            if (window.innerWidth < 1024 && 
+                !tocNav.contains(e.target) && 
+                !toggleBtn.contains(e.target)) {
+                tocNav.classList.add('-translate-x-full');
+            }
+        });
+    </script>
+  </body>
 
 </html>
