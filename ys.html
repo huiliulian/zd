@@ -1,0 +1,1497 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人主观意识可视化系统：实现逻辑与框架模型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Canela:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e293b;
+            --secondary: #475569;
+            --accent: #3b82f6;
+            --muted: #f8fafc;
+            --border: #e2e8f0;
+        }
+        
+        .font-canela { font-family: 'Canela', serif; }
+        .font-inter { font-family: 'Inter', sans-serif; }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .toc-fixed {
+            position: fixed;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 280px;
+            max-height: 70vh;
+            overflow-y: auto;
+            z-index: 50;
+        }
+        
+        .content-with-toc {
+            margin-left: 320px;
+        }
+        
+        @media (max-width: 1280px) {
+            .toc-fixed {
+                display: none;
+            }
+            .content-with-toc {
+                margin-left: 0;
+            }
+        }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 2rem;
+            height: 70vh;
+        }
+        
+        .bento-main {
+            grid-row: span 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .bento-side-1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .bento-side-2 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 4rem 0;
+        }
+        
+        .model-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .model-card:hover {
+            border-left-color: var(--accent);
+            transform: translateX(4px);
+        }
+        
+        .citation-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.875rem;
+            vertical-align: super;
+            margin-left: 2px;
+        }
+        
+        .citation-link:hover {
+            text-decoration: underline;
+        }
+        
+        .layer-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .layer-1 { background-color: #ef4444; }
+        .layer-2 { background-color: #f59e0b; }
+        .layer-3 { background-color: #10b981; }
+        .layer-4 { background-color: #3b82f6; }
+        
+        @media (max-width: 768px) {
+            .px-8 {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .bento-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto auto;
+                height: auto;
+            }
+            .bento-main {
+                grid-row: span 1;
+            }
+            .bento-main h1 {
+                font-size: 2.5rem;
+                line-height: 1.2;
+            }
+            .bento-main p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+  <base target="_blank">
+</head>
+
+  <body class="bg-slate-50 font-inter text-slate-800">
+
+    <!-- Fixed Table of Contents -->
+    <nav class="toc-fixed glass-effect rounded-2xl p-6 shadow-xl">
+      <h3 class="font-canela text-lg font-bold mb-4 text-slate-800">目录</h3>
+      <ul class="space-y-2 text-sm">
+        <li>
+          <a href="#introduction" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">引言</a>
+        </li>
+        <li>
+          <a href="#consciousness-model" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">意识四层次元模型</a>
+        </li>
+        <li class="ml-4">
+          <a href="#layer-1" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">第一层次：现象场</a>
+        </li>
+        <li class="ml-4">
+          <a href="#layer-2" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">第二层次：注意力调控</a>
+        </li>
+        <li class="ml-4">
+          <a href="#layer-3" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">第三层次：决策与行动</a>
+        </li>
+        <li class="ml-4">
+          <a href="#layer-4" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">第四层次：元认知</a>
+        </li>
+        <li>
+          <a href="#dikwp-model" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">DIKWP信息处理模型</a>
+        </li>
+        <li class="ml-4">
+          <a href="#data-layer" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">数据层</a>
+        </li>
+        <li class="ml-4">
+          <a href="#information-layer" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">信息层</a>
+        </li>
+        <li class="ml-4">
+          <a href="#knowledge-layer" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">知识层</a>
+        </li>
+        <li class="ml-4">
+          <a href="#wisdom-layer" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">智慧层</a>
+        </li>
+        <li class="ml-4">
+          <a href="#purpose-layer" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">意图层</a>
+        </li>
+        <li>
+          <a href="#classification-model" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">内容分类模型</a>
+        </li>
+        <li>
+          <a href="#framework" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">实现逻辑框架</a>
+        </li>
+        <li>
+          <a href="#visualization" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">可视化呈现</a>
+        </li>
+        <li>
+          <a href="#conclusion" class="block py-1 px-2 rounded hover:bg-slate-100 transition-colors">总结</a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="content-with-toc">
+
+      <!-- Hero Section with Bento Layout -->
+      <section class="hero-gradient min-h-screen flex items-center">
+        <div class="container mx-auto px-8">
+          <div class="bento-grid">
+
+            <!-- Main Content Area -->
+            <div class="bento-main">
+              <div class="text-white">
+                <h1 class="font-canela text-6xl lg:text-7xl font-bold leading-tight mb-8">
+                  <span class="italic">解构</span>
+                  <br>
+                  主观意识
+                  <br>
+                  <span class="text-blue-300">的数字化镜像</span>
+                </h1>
+                <p class="text-xl lg:text-2xl font-light leading-relaxed max-w-2xl mb-12 text-slate-200">
+                  通过意识四层次元模型与DIKWP认知演化框架，构建个人精神世界的动态可视化系统
+                </p>
+                <div class="flex items-center space-x-6 text-sm text-slate-300">
+                  <div class="flex items-center space-x-2">
+                    <i class="fas fa-brain text-blue-400"></i>
+                    <span>认知科学</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <i class="fas fa-chart-network text-green-400"></i>
+                    <span>数据可视化</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <i class="fas fa-user-circle text-purple-400"></i>
+                    <span>个人成长</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Side Panel 1 -->
+            <div class="bento-side-1 glass-effect rounded-2xl p-8">
+              <div class="text-center">
+                <div class="text-4xl font-canela font-bold text-slate-800 mb-2">4</div>
+                <div class="text-sm text-slate-600 mb-4">意识层次</div>
+                <div class="space-y-2">
+                  <div class="flex items-center text-xs">
+                    <span class="layer-indicator layer-1"></span>现象场
+                  </div>
+                  <div class="flex items-center text-xs">
+                    <span class="layer-indicator layer-2"></span>注意力
+                  </div>
+                  <div class="flex items-center text-xs">
+                    <span class="layer-indicator layer-3"></span>决策
+                  </div>
+                  <div class="flex items-center text-xs">
+                    <span class="layer-indicator layer-4"></span>元认知
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Side Panel 2 -->
+            <div class="bento-side-2 glass-effect rounded-2xl p-8">
+              <div class="text-center">
+                <div class="text-4xl font-canela font-bold text-slate-800 mb-2">5</div>
+                <div class="text-sm text-slate-600 mb-4">认知层次</div>
+                <div class="space-y-2 text-xs text-slate-700">
+                  <div>数据 → 信息</div>
+                  <div>知识 → 智慧</div>
+                  <div>意图驱动</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Introduction -->
+      <section id="introduction" class="py-20 bg-white">
+        <div class="container mx-auto px-8 max-w-4xl">
+          <div class="prose prose-lg max-w-none">
+            <h2 class="font-canela text-4xl font-bold text-slate-800 mb-8">引言</h2>
+            <div class="text-xl leading-relaxed text-slate-600 mb-8">
+              <p class="mb-6">
+                构建一个个人主观意识可视化系统，其核心逻辑在于通过两个互补的模型来解构和重构精神世界：<strong class="text-slate-800">"意识四层次元模型"</strong>作为核心架构，描述了意识从原始体验到元认知觉察的动态过程；<strong class="text-slate-800">"DIKWP模型"</strong>作为信息处理引擎，将用户输入的原始文本数据逐步提炼为结构化的信息、系统性的知识、深刻的智慧，并最终服务于用户的个人成长"意图"。
+              </p>
+              <p>
+                系统通过多维度内容分类模型（如自我认知、情绪、思维等）来组织数据，并采用以文本为核心的多种可视化方式（如时间线、思维导图、知识网络图）进行呈现，最终实现一个能够与用户共同成长、不断完善的<strong class="text-blue-600">"数字心智伴侣"</strong>。
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Consciousness Four-Layer Model -->
+      <section id="consciousness-model" class="py-20 bg-slate-50">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <header class="mb-16">
+            <h2 class="font-canela text-5xl font-bold text-slate-800 mb-6">意识四层次元模型</h2>
+            <p class="text-xl text-slate-600 max-w-3xl">
+              由中国心理学家刘志鸥提出的理论框架，将意识解构为四个在逻辑上逐级递进、在功能上递归互动的层次，形成动态循环的意识运作系统<a href="https://m.tech.china.com/digi/digi/gdxv/2025/1018/1749438.html" class="citation-link">[1]</a>
+              <a href="https://m.tech.china.com/digi/articles/20250917/202509171733294.html" class="citation-link">[2]</a>。
+            </p>
+          </header>
+
+          <!-- Layer 1: Phenomenal Field -->
+          <div id="layer-1" class="model-card bg-white rounded-2xl p-8 mb-8 shadow-lg">
+            <div class="flex items-start space-x-6">
+              <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-eye text-2xl text-red-600"></i>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-canela text-2xl font-bold text-slate-800 mb-4">
+                  <span class="layer-indicator layer-1"></span>
+                  第一层次：意识（Consciousness）- 现象场
+                </h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">功能：被动接收所有主观体验</h4>
+                    <p class="text-slate-600 mb-4">
+                      作为所有主观体验的被动接收层和呈现基础，像一个全景摄像机，忠实地记录下所有进入感知领域的内容<a href="https://m.tech.china.com/digi/articles/20250917/202509171733294.html" class="citation-link">[2]</a>。
+                    </p>
+                    <div class="bg-red-50 rounded-lg p-4">
+                      <h5 class="font-medium text-red-800 mb-2">系统实现</h5>
+                      <p class="text-red-700 text-sm">用户输入的原始数据，包括即时感官描述、突发情绪感受、脑海中闪过的念头</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">内容：感觉、情绪、念头等原始素材</h4>
+                    <ul class="space-y-2 text-slate-600">
+                      <li class="flex items-center space-x-2">
+                        <i class="fas fa-hand-paper text-blue-500"></i>
+                        <span><strong>感官体验：</strong>视觉、听觉、嗅觉、味觉、触觉</span>
+                      </li>
+                      <li class="flex items-center space-x-2">
+                        <i class="fas fa-heart text-red-500"></i>
+                        <span><strong>情绪体验：</strong>喜怒哀乐等基本情绪</span>
+                      </li>
+                      <li class="flex items-center space-x-2">
+                        <i class="fas fa-lightbulb text-yellow-500"></i>
+                        <span><strong>认知内容：</strong>念头、想法、记忆片段</span>
+                      </li>
+                      <li class="flex items-center space-x-2">
+                        <i class="fas fa-user text-green-500"></i>
+                        <span><strong>身体感知：</strong>身体感觉、舒适度</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Layer 2: Attention Control -->
+          <div id="layer-2" class="model-card bg-white rounded-2xl p-8 mb-8 shadow-lg">
+            <div class="flex items-start space-x-6">
+              <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-search text-2xl text-orange-600"></i>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-canela text-2xl font-bold text-slate-800 mb-4">
+                  <span class="layer-indicator layer-2"></span>
+                  第二层次：选择意识（Choice of Consciousness）- 注意力调控
+                </h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">功能：主动选择与聚焦特定信息</h4>
+                    <p class="text-slate-600 mb-4">
+                      如同舞台上的"探照灯"，从广阔而混沌的现象场中，选择性地聚焦特定信息，同时忽略其他信息<a href="https://m.tech.china.com/digi/articles/20250917/202509171733294.html" class="citation-link">[2]</a>。
+                    </p>
+                    <div class="bg-orange-50 rounded-lg p-4">
+                      <h5 class="font-medium text-orange-800 mb-2">系统实现</h5>
+                      <p class="text-orange-700 text-sm">用户对已输入信息的初步整理和标记，如高亮、加星标或添加关键词</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">作用：认知控制的起点和关键杠杆</h4>
+                    <div class="bg-slate-50 rounded-lg p-6">
+                      <div class="flex items-center justify-between mb-4">
+                        <span class="text-sm font-medium text-slate-700">注意力热力图</span>
+                        <i class="fas fa-chart-bar text-orange-500"></i>
+                      </div>
+                      <div class="space-y-3">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-3 h-3 bg-red-400 rounded"></div>
+                          <span class="text-xs text-slate-600">负面情绪关注</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <div class="w-3 h-3 bg-green-400 rounded"></div>
+                          <span class="text-xs text-slate-600">积极情绪关注</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <div class="w-3 h-3 bg-blue-400 rounded"></div>
+                          <span class="text-xs text-slate-600">工作相关关注</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Layer 3: Conscious Choice -->
+          <div id="layer-3" class="model-card bg-white rounded-2xl p-8 mb-8 shadow-lg">
+            <div class="flex items-start space-x-6">
+              <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-chess text-2xl text-green-600"></i>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-canela text-2xl font-bold text-slate-800 mb-4">
+                  <span class="layer-indicator layer-3"></span>
+                  第三层次：意识选择（Conscious Choice）- 决策与行动
+                </h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">功能：基于聚焦信息进行权衡、判断</h4>
+                    <p class="text-slate-600 mb-4">
+                      在已被聚焦的信息基础上，进行权衡、判断和决策，如同一个"导演"，决定剧情的走向<a href="https://m.tech.china.com/digi/articles/20250917/202509171733294.html" class="citation-link">[2]</a>。
+                    </p>
+                    <div class="bg-green-50 rounded-lg p-4">
+                      <h5 class="font-medium text-green-800 mb-2">系统实现</h5>
+                      <p class="text-green-700 text-sm">用户记录自己的决策过程，如为什么产生某个想法，或计划如何应对某个挑战</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">结果：产生显性决策与行为</h4>
+                    <div class="space-y-4">
+                      <div class="border-l-4 border-green-400 pl-4">
+                        <div class="font-medium text-slate-700">决策记录</div>
+                        <div class="text-sm text-slate-600">"我决定今晚去跑步"</div>
+                      </div>
+                      <div class="border-l-4 border-blue-400 pl-4">
+                        <div class="font-medium text-slate-700">行为追踪</div>
+                        <div class="text-sm text-slate-600">系统追踪决策是否被执行</div>
+                      </div>
+                      <div class="border-l-4 border-purple-400 pl-4">
+                        <div class="font-medium text-slate-700">模式分析</div>
+                        <div class="text-sm text-slate-600">分析决策模式和行为习惯</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Layer 4: Metacognition -->
+          <div id="layer-4" class="model-card bg-white rounded-2xl p-8 mb-8 shadow-lg">
+            <div class="flex items-start space-x-6">
+              <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-eye text-2xl text-blue-600"></i>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-canela text-2xl font-bold text-slate-800 mb-4">
+                  <span class="layer-indicator layer-4"></span>
+                  第四层次：意识的意识（Consciousness of Consciousness）- 元认知
+                </h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">功能：对意识自身内容与过程的觉知</h4>
+                    <p class="text-slate-600 mb-4">
+                      以"旁观者"的视角，对意识自身的整个运作过程进行觉知、反思和监控，意识到"我正在拥有体验"、"我正在聚焦注意力"<a href="https://m.tech.china.com/digi/articles/20250917/202509171733294.html" class="citation-link">[2]</a>。
+                    </p>
+                    <div class="bg-blue-50 rounded-lg p-4">
+                      <h5 class="font-medium text-blue-800 mb-2">系统实现</h5>
+                      <p class="text-blue-700 text-sm">引导用户进行元认知层面的反思，如"你为什么会这样想？"、"你注意到你处理这个问题时的模式了吗？"</p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">作用：反思、监控与调节，实现自我超越</h4>
+                    <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-6">
+                      <div class="text-center mb-4">
+                        <i class="fas fa-infinity text-3xl text-blue-600 mb-2"></i>
+                        <div class="font-medium text-slate-700">自我超越循环</div>
+                      </div>
+                      <div class="space-y-3 text-sm">
+                        <div class="flex items-center space-x-2">
+                          <i class="fas fa-arrow-right text-blue-500"></i>
+                          <span>觉知思维模式</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <i class="fas fa-arrow-right text-purple-500"></i>
+                          <span>监控情绪反应</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <i class="fas fa-arrow-right text-green-500"></i>
+                          <span>启动调节策略</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <i class="fas fa-arrow-right text-orange-500"></i>
+                          <span>实现心理灵活性</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- DIKWP Model -->
+      <section id="dikwp-model" class="py-20 bg-white">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <header class="mb-16">
+            <h2 class="font-canela text-5xl font-bold text-slate-800 mb-6">DIKWP信息处理与结构化模型</h2>
+            <p class="text-xl text-slate-600 max-w-3xl">
+              从原始、离散的事实到具有指导意义的智慧，并最终服务于特定目标的认知演化过程，实现知识复利效应<a href="https://zhuanlan.zhihu.com/p/412895455" class="citation-link">[3]</a>。
+            </p>
+          </header>
+
+          <!-- Data Layer -->
+          <div id="data-layer" class="model-card bg-slate-50 rounded-2xl p-8 mb-8 border-l-4 border-red-400">
+            <div class="flex items-start space-x-6">
+              <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-database text-2xl text-red-600"></i>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-canela text-2xl font-bold text-slate-800 mb-4">数据层（Data）：原始意识片段</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">来源：用户上传的文本信息</h4>
+                    <p class="text-slate-600 mb-4">
+                      用户通过Web界面主动上传的文本或字符信息，是用户主观意识的直接映射，包括感官描述、情绪状态、念头想法等。
+                    </p>
+                    <div class="space-y-2">
+                      <div class="bg-white rounded-lg p-3 border-l-4 border-red-400">
+                        <div class="text-sm font-medium text-slate-700">感官描述</div>
+                        <div class="text-xs text-slate-600">"办公室空调有点冷"</div>
+                      </div>
+                      <div class="bg-white rounded-lg p-3 border-l-4 border-blue-400">
+                        <div class="text-sm font-medium text-slate-700">情绪状态</div>
+                        <div class="text-xs text-slate-600">"感到有些焦虑"</div>
+                      </div>
+                      <div class="bg-white rounded-lg p-3 border-l-4 border-yellow-400">
+                        <div class="text-sm font-medium text-slate-700">念头想法</div>
+                        <div class="text-xs text-slate-600">"我想换个工作"</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">特点：未经处理的、离散的事实</h4>
+                    <p class="text-slate-600 mb-4">
+                      每一条用户输入都是一个独立的事实，不包含关联，不具备超越字面意义的深层含义，保证了数据的客观性和中立性。
+                    </p>
+                    <div class="bg-white rounded-lg p-6 border-2 border-dashed border-slate-300">
+                      <div class="text-center">
+                        <i class="fas fa-puzzle-piece text-3xl text-slate-400 mb-3"></i>
+                        <div class="font-medium text-slate-700 mb-2">离散数据点</div>
+                        <div class="text-sm text-slate-600">
+                          "今天下雨了" + "我感到心情低落" = 两个独立事件
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Information Layer -->
+          <div id="information-layer" class="model-card bg-slate-50 rounded-2xl p-8 mb-8 border-l-4 border-orange-400">
+            <div class="flex items-start space-x-6">
+              <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-tag text-2xl text-orange-600"></i>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-canela text-2xl font-bold text-slate-800 mb-4">信息层（Information）：赋予上下文与意义</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">处理：分类、标注、排序</h4>
+                    <p class="text-slate-600 mb-4">
+                      为离散的数据点赋予上下文，使其具有特定意义。系统根据多维度内容分类模型对数据进行自动或半自动的分类。
+                    </p>
+                    <div class="space-y-3">
+                      <div class="flex items-center space-x-3">
+                        <i class="fas fa-folder text-orange-500"></i>
+                        <span class="text-sm text-slate-700">自动分类</span>
+                      </div>
+                      <div class="flex items-center space-x-3">
+                        <i class="fas fa-hashtag text-orange-500"></i>
+                        <span class="text-sm text-slate-700">语义标签</span>
+                      </div>
+                      <div class="flex items-center space-x-3">
+                        <i class="fas fa-sort text-orange-500"></i>
+                        <span class="text-sm text-slate-700">时间排序</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">结果：具有特定意义和结构的信息</h4>
+                    <div class="bg-white rounded-lg p-6">
+                      <div class="text-sm font-medium text-slate-700 mb-4">数据转化示例</div>
+                      <div class="space-y-3">
+                        <div class="flex items-center justify-between p-2 bg-red-50 rounded">
+                          <span class="text-xs text-slate-600">"今天下雨了"</span>
+                          <i class="fas fa-arrow-right text-slate-400"></i>
+                          <span class="text-xs font-medium text-red-700">感官体验-天气</span>
+                        </div>
+                        <div class="flex items-center justify-between p-2 bg-blue-50 rounded">
+                          <span class="text-xs text-slate-600">"我感到心情低落"</span>
+                          <i class="fas fa-arrow-right text-slate-400"></i>
+                          <span class="text-xs font-medium text-blue-700">情绪状态-负面</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Knowledge Layer -->
+          <div id="knowledge-layer" class="model-card bg-slate-50 rounded-2xl p-8 mb-8 border-l-4 border-green-400">
+            <div class="flex items-start space-x-6">
+              <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-network-wired text-2xl text-green-600"></i>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-canela text-2xl font-bold text-slate-800 mb-4">知识层（Knowledge）：建立关联与模式</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">处理：分析信息间的关联</h4>
+                    <p class="text-slate-600 mb-4">
+                      在已经结构化的信息之间建立更深层次的关联，发现重复出现的模式、规律和趋势，挖掘信息之间的隐藏联系。
+                    </p>
+                    <div class="bg-green-50 rounded-lg p-4">
+                      <h5 class="font-medium text-green-800 mb-2">模式发现示例</h5>
+                      <p class="text-green-700 text-sm">
+                        "每当工作压力增大时 → 出现'想吃甜食'的念头 → 睡眠质量下降"
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">结果：解释"如何"做事的知识体系</h4>
+                    <div class="bg-white rounded-lg p-6">
+                      <div class="text-center mb-4">
+                        <i class="fas fa-sitemap text-3xl text-green-600"></i>
+                      </div>
+                      <div class="text-sm font-medium text-slate-700 mb-3">知识网络示例</div>
+                      <div class="space-y-2 text-xs">
+                        <div class="flex items-center space-x-2">
+                          <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <span>需要保证7小时睡眠</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                          <span>上午是创造力高峰期</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
+                          <span>处理复杂任务前需要清空干扰</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Wisdom Layer -->
+          <div id="wisdom-layer" class="model-card bg-slate-50 rounded-2xl p-8 mb-8 border-l-4 border-blue-400">
+            <div class="flex items-start space-x-6">
+              <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-lightbulb text-2xl text-blue-600"></i>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-canela text-2xl font-bold text-slate-800 mb-4">智慧层（Wisdom）：洞察与决策</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">处理：基于知识进行创新性判断</h4>
+                    <p class="text-slate-600 mb-4">
+                      基于已有的知识体系，结合具体情境，进行创新性判断和决策。在复杂情境下权衡利弊、预见后果、做出最优选择。
+                    </p>
+                    <div class="bg-blue-50 rounded-lg p-4">
+                      <h5 class="font-medium text-blue-800 mb-2">决策支持示例</h5>
+                      <p class="text-blue-700 text-sm">
+                        基于用户过往关于"职业满意度"、"工作与生活平衡"的知识，为是否接受新工作提供个性化建议
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">结果：关注"为什么"的深刻洞察</h4>
+                    <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-6">
+                      <div class="text-center mb-4">
+                        <i class="fas fa-search-plus text-3xl text-blue-600"></i>
+                      </div>
+                      <div class="text-sm font-medium text-slate-700 mb-3">深度洞察示例</div>
+                      <div class="bg-white rounded-lg p-4 border-l-4 border-blue-400">
+                        <div class="text-xs text-slate-600 mb-2">发现核心信念</div>
+                        <div class="text-sm text-slate-800">
+                          "我之所以频繁更换工作，是因为我内心深处渴望被认可，而不仅仅是追求高薪"
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Purpose Layer -->
+          <div id="purpose-layer" class="model-card bg-slate-50 rounded-2xl p-8 border-l-4 border-purple-400">
+            <div class="flex items-start space-x-6">
+              <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-bullseye text-2xl text-purple-600"></i>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h3 class="font-canela text-2xl font-bold text-slate-800 mb-4">意图层（Purpose）：内在动机与目标</h3>
+                <div class="grid md:grid-cols-2 gap-8">
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">作用：为整个认知过程提供方向</h4>
+                    <p class="text-slate-600 mb-4">
+                      代表用户的内在动机、核心价值观和长期目标。整个从数据到智慧的认知过程都围绕这个"意图"展开。
+                    </p>
+                    <div class="space-y-3">
+                      <div class="flex items-center space-x-3">
+                        <i class="fas fa-heart text-purple-500"></i>
+                        <span class="text-sm text-slate-700">内在动机</span>
+                      </div>
+                      <div class="flex items-center space-x-3">
+                        <i class="fas fa-compass text-purple-500"></i>
+                        <span class="text-sm text-slate-700">核心价值观</span>
+                      </div>
+                      <div class="flex items-center space-x-3">
+                        <i class="fas fa-flag text-purple-500"></i>
+                        <span class="text-sm text-slate-700">长期目标</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="font-semibold text-slate-700 mb-3">体现：系统的自我完善与扩展目标</h4>
+                    <div class="bg-white rounded-lg p-6">
+                      <div class="text-center mb-4">
+                        <i class="fas fa-seedling text-3xl text-purple-600"></i>
+                      </div>
+                      <div class="text-sm font-medium text-slate-700 mb-3">共同成长</div>
+                      <div class="space-y-2 text-xs text-slate-600">
+                        <div>用户意图："提升创造力"</div>
+                        <div class="text-purple-600">↓</div>
+                        <div>系统重点：分析创造性思维模式</div>
+                        <div class="text-purple-600">↓</div>
+                        <div>提供相应的训练工具</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Classification Model -->
+      <section id="classification-model" class="py-20 bg-slate-50">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <header class="mb-16">
+            <h2 class="font-canela text-5xl font-bold text-slate-800 mb-6">主观意识内容分类模型</h2>
+            <p class="text-xl text-slate-600 max-w-3xl">
+              多维度立体框架，借鉴认知心理学、情绪理论和自我概念等多个领域的研究成果，构建结构化的个人精神世界地图<a href="https://arxiv.org/html/2510.01864v1" class="citation-link">[4]</a>
+              <a href="https://www.mdpi.com/2076-3417/12/4/1903" class="citation-link">[5]</a>。
+            </p>
+          </header>
+
+          <div class="grid lg:grid-cols-2 xl:grid-cols-3 gap-8">
+            <!-- Self-Awareness -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-user-circle text-blue-600"></i>
+                </div>
+                <h3 class="font-canela text-xl font-bold text-slate-800">自我认知</h3>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">自我认识</h4>
+                  <p class="text-sm text-slate-600">对自身的想法、信念、价值观的认知，构建自我概念<a href="https://zhuanlan.zhihu.com/p/570896440" class="citation-link">[6]</a>
+                  </p>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">自我体验</h4>
+                  <p class="text-sm text-slate-600">伴随自我认识的内在感受，如自尊、自信、自卑等</p>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">自我调控</h4>
+                  <p class="text-sm text-slate-600">对自身心理和行为的主动调节，如情绪调节、压力管理</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Emotions -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-heart text-red-600"></i>
+                </div>
+                <h3 class="font-canela text-xl font-bold text-slate-800">情绪感知</h3>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">情绪状态</h4>
+                  <p class="text-sm text-slate-600">喜怒哀乐等基本情绪的记录和追踪</p>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">情感体验</h4>
+                  <p class="text-sm text-slate-600">更复杂的情感，如爱、恨、羞耻、内疚等</p>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">情绪触发</h4>
+                  <p class="text-sm text-slate-600">记录情绪的来源和波动过程</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Thinking -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-brain text-green-600"></i>
+                </div>
+                <h3 class="font-canela text-xl font-bold text-slate-800">思维过程</h3>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">逻辑推理</h4>
+                  <p class="text-sm text-slate-600">分析、判断、推理过程的记录</p>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">创造性思维</h4>
+                  <p class="text-sm text-slate-600">灵感、联想、创新想法的捕捉</p>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">问题解决</h4>
+                  <p class="text-sm text-slate-600">面对问题时的思考路径记录</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sensory -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-eye text-yellow-600"></i>
+                </div>
+                <h3 class="font-canela text-xl font-bold text-slate-800">感官体验</h3>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">五感信息</h4>
+                  <p class="text-sm text-slate-600">视觉、听觉、嗅觉、味觉、触觉的记录</p>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">身体感知</h4>
+                  <p class="text-sm text-slate-600">身体状态、舒适度、疼痛感等</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subconscious -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-moon text-purple-600"></i>
+                </div>
+                <h3 class="font-canela text-xl font-bold text-slate-800">潜意识流</h3>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">梦境</h4>
+                  <p class="text-sm text-slate-600">记录梦境内容及其象征意义</p>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">自动化想法</h4>
+                  <p class="text-sm text-slate-600">未被觉察的、习惯性的思维模式</p>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">深层记忆</h4>
+                  <p class="text-sm text-slate-600">被压抑或遗忘的记忆片段</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Extensions -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+              <div class="flex items-center space-x-3 mb-4">
+                <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <i class="fas fa-plus text-indigo-600"></i>
+                </div>
+                <h3 class="font-canela text-xl font-bold text-slate-800">扩展维度</h3>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">人际关系</h4>
+                  <p class="text-sm text-slate-600">与他人的互动、交流和关系理解</p>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">知识学习</h4>
+                  <p class="text-sm text-slate-600">新知识的获取、学习过程和理解</p>
+                </div>
+                <div>
+                  <h4 class="font-medium text-slate-700 mb-2">信仰价值观</h4>
+                  <p class="text-sm text-slate-600">对世界的看法、道德标准和信念</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Implementation Framework -->
+      <section id="framework" class="py-20 bg-white">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <header class="mb-16">
+            <h2 class="font-canela text-5xl font-bold text-slate-800 mb-6">系统实现逻辑框架</h2>
+            <p class="text-xl text-slate-600 max-w-3xl">
+              五个核心模块组成的数据处理流水线，确保从数据采集到最终呈现的完整流程，实现高效、准确的意识内容处理和可视化<a href="https://zhuanlan.zhihu.com/p/37166759" class="citation-link">[7]</a>
+              <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10984189/" class="citation-link">[8]</a>
+              <a href="https://juejin.cn/post/7390184494098333750" class="citation-link">[9]</a>。
+            </p>
+          </header>
+
+          <div class="grid lg:grid-cols-2 gap-8 mb-12">
+            <!-- Data Collection -->
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8">
+              <div class="flex items-center space-x-3 mb-6">
+                <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-download text-2xl text-white"></i>
+                </div>
+                <div>
+                  <h3 class="font-canela text-2xl font-bold text-slate-800">数据采集与输入</h3>
+                  <p class="text-slate-600">系统与用户交互的起点</p>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">输入方式</h4>
+                  <p class="text-sm text-slate-600">以文本或字符为主，简洁直观的输入界面</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">辅助上传</h4>
+                  <p class="text-sm text-slate-600">特定时间提醒、智能提示上传等</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">界面设计</h4>
+                  <p class="text-sm text-slate-600">简洁、快速、随时可用的"无摩擦"体验</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Data Processing -->
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-8">
+              <div class="flex items-center space-x-3 mb-6">
+                <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-cogs text-2xl text-white"></i>
+                </div>
+                <div>
+                  <h3 class="font-canela text-2xl font-bold text-slate-800">数据处理与存储</h3>
+                  <p class="text-slate-600">系统的"大脑"</p>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">信息分类</h4>
+                  <p class="text-sm text-slate-600">根据多维度模型自动或半自动分类</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">结构化存储</h4>
+                  <p class="text-sm text-slate-600">将分类信息存入数据库，添加元数据</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">关联建立</h4>
+                  <p class="text-sm text-slate-600">在信息片段间建立语义关联<a href="https://zhuanlan.zhihu.com/p/231513286" class="citation-link">[10]</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Analysis -->
+            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-8">
+              <div class="flex items-center space-x-3 mb-6">
+                <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-brain text-2xl text-white"></i>
+                </div>
+                <div>
+                  <h3 class="font-canela text-2xl font-bold text-slate-800">分析与认知</h3>
+                  <p class="text-slate-600">系统的"智慧"所在</p>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">模式发现</h4>
+                  <p class="text-sm text-slate-600">从数据中发现重复出现的模式、趋势</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">关联分析</h4>
+                  <p class="text-sm text-slate-600">分析不同维度信息间的复杂关系</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">知识图谱</h4>
+                  <p class="text-sm text-slate-600">构建个人意识知识图谱</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Visualization -->
+            <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-8">
+              <div class="flex items-center space-x-3 mb-6">
+                <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-chart-line text-2xl text-white"></i>
+                </div>
+                <div>
+                  <h3 class="font-canela text-2xl font-bold text-slate-800">可视化与呈现</h3>
+                  <p class="text-slate-600">与用户交互的最终界面</p>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">多维度视图</h4>
+                  <p class="text-sm text-slate-600">时间线、思维导图、情绪热图等</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">动态呈现</h4>
+                  <p class="text-sm text-slate-600">H5动画展示意识演变过程</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">交互探索</h4>
+                  <p class="text-sm text-slate-600">点击、缩放、筛选等交互功能</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feedback -->
+            <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-8">
+              <div class="flex items-center space-x-3 mb-6">
+                <div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center">
+                  <i class="fas fa-sync-alt text-2xl text-white"></i>
+                </div>
+                <div>
+                  <h3 class="font-canela text-2xl font-bold text-slate-800">反馈与交互</h3>
+                  <p class="text-slate-600">系统自完善的关键</p>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">用户标注修正</h4>
+                  <p class="text-sm text-slate-600">允许用户对自动分类和分析结果进行修正</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">系统提示建议</h4>
+                  <p class="text-sm text-slate-600">基于分析结果提供自我反思建议</p>
+                </div>
+                <div class="bg-white rounded-lg p-4">
+                  <h4 class="font-medium text-slate-700 mb-2">迭代优化</h4>
+                  <p class="text-sm text-slate-600">根据用户反馈不断完善模型和算法</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Visualization -->
+      <section id="visualization" class="py-20 bg-slate-50">
+        <div class="container mx-auto px-8 max-w-6xl">
+          <header class="mb-16">
+            <h2 class="font-canela text-5xl font-bold text-slate-800 mb-6">可视化呈现方式</h2>
+            <p class="text-xl text-slate-600 max-w-3xl">
+              以文本和字符为核心介质，通过多组合与动态性的可视化方式，真实反映主观意识的流动性和复杂性。
+            </p>
+          </header>
+
+          <!-- Core Media -->
+          <div class="mb-16">
+            <h3 class="font-canela text-3xl font-bold text-slate-800 mb-8">核心呈现介质</h3>
+            <div class="grid md:grid-cols-3 gap-8">
+              <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-font text-blue-600"></i>
+                  </div>
+                  <h4 class="font-canela text-xl font-bold text-slate-800">UI设计</h4>
+                </div>
+                <p class="text-slate-600 mb-4 text-sm">
+                  以文本为主的界面布局，时间线视图采用带时间戳和标签的文本卡片，思维导图由关键词和短句构成节点。
+                </p>
+                <div class="bg-slate-50 rounded-lg p-3">
+                  <div class="text-xs text-slate-500 mb-2">示例布局</div>
+                  <div class="space-y-2">
+                    <div class="bg-white rounded p-2 text-xs border-l-4 border-blue-400">
+                      <div class="font-medium">09:30</div>
+                      <div class="text-slate-600">开始工作，感觉有点累</div>
+                    </div>
+                    <div class="bg-white rounded p-2 text-xs border-l-4 border-green-400">
+                      <div class="font-medium">14:15</div>
+                      <div class="text-slate-600">完成了重要项目，很有成就感</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-vector-square text-green-600"></i>
+                  </div>
+                  <h4 class="font-canela text-xl font-bold text-slate-800">矢量图形</h4>
+                </div>
+                <p class="text-slate-600 mb-4 text-sm">
+                  用矢量图表示抽象概念和关系，不同颜色和大小的圆圈表示情绪强度，线条粗细表示概念关联强弱。
+                </p>
+                <div class="bg-slate-50 rounded-lg p-3">
+                  <div class="flex items-center justify-around">
+                    <div class="text-center">
+                      <div class="w-8 h-8 bg-red-400 rounded-full mb-1"></div>
+                      <div class="text-xs text-slate-600">愤怒</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="w-6 h-6 bg-yellow-400 rounded-full mb-1"></div>
+                      <div class="text-xs text-slate-600">焦虑</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="w-10 h-10 bg-blue-400 rounded-full mb-1"></div>
+                      <div class="text-xs text-slate-600">平静</div>
+                    </div>
+                  </div>
+                  <div class="mt-3 space-y-1">
+                    <div class="flex items-center space-x-2">
+                      <div class="w-8 h-0.5 bg-slate-400"></div>
+                      <span class="text-xs text-slate-600">弱关联</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <div class="w-8 h-1.5 bg-slate-600"></div>
+                      <span class="text-xs text-slate-600">强关联</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-play text-purple-600"></i>
+                  </div>
+                  <h4 class="font-canela text-xl font-bold text-slate-800">H5动画</h4>
+                </div>
+                <p class="text-slate-600 mb-4 text-sm">
+                  用动画增强可视化的动态性和交互性，展示想法从萌芽到成熟，情绪从产生到消散的过程。
+                </p>
+                <div class="bg-slate-50 rounded-lg p-3">
+                  <div class="text-xs text-slate-500 mb-2">意识流动演示</div>
+                  <div class="relative">
+                    <div class="flex items-center space-x-2 mb-2">
+                      <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                      <span class="text-xs text-slate-600">念头产生</span>
+                    </div>
+                    <div class="flex items-center space-x-2 mb-2">
+                      <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+                      <span class="text-xs text-slate-600">想法发展</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <div class="w-4 h-4 bg-purple-400 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
+                      <span class="text-xs text-slate-600">形成决策</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-dimensional Views -->
+          <div class="mb-16">
+            <h3 class="font-canela text-3xl font-bold text-slate-800 mb-8">多维度视图组合</h3>
+            <div class="grid lg:grid-cols-2 gap-8">
+              <div class="bg-white rounded-2xl p-8 shadow-lg">
+                <h4 class="font-canela text-xl font-bold text-slate-800 mb-6">单一维度深度视图</h4>
+                <p class="text-slate-600 mb-6">
+                  聚焦某一维度进行深度展示，如情绪记录的图表分析，帮助用户对特定方面进行深入自我分析。
+                </p>
+                <div class="bg-slate-50 rounded-lg p-6">
+                  <div class="text-center mb-4">
+                    <i class="fas fa-chart-area text-3xl text-blue-600"></i>
+                  </div>
+                  <div class="text-sm font-medium text-slate-700 mb-3">情绪变化趋势</div>
+                  <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                      <span class="text-xs text-slate-600">周一</span>
+                      <div class="flex-1 mx-2 bg-slate-200 rounded-full h-2">
+                        <div class="bg-red-400 h-2 rounded-full" style="width: 30%"></div>
+                      </div>
+                      <span class="text-xs text-slate-600">低落</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-xs text-slate-600">周二</span>
+                      <div class="flex-1 mx-2 bg-slate-200 rounded-full h-2">
+                        <div class="bg-green-400 h-2 rounded-full" style="width: 80%"></div>
+                      </div>
+                      <span class="text-xs text-slate-600">愉悦</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-xs text-slate-600">周三</span>
+                      <div class="flex-1 mx-2 bg-slate-200 rounded-full h-2">
+                        <div class="bg-yellow-400 h-2 rounded-full" style="width: 60%"></div>
+                      </div>
+                      <span class="text-xs text-slate-600">平静</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-2xl p-8 shadow-lg">
+                <h4 class="font-canela text-xl font-bold text-slate-800 mb-6">多维度关联视图</h4>
+                <p class="text-slate-600 mb-6">
+                  展示不同维度之间的交叉和关联，如工作压力如何影响睡眠质量和情绪状态。
+                </p>
+                <div class="bg-slate-50 rounded-lg p-6">
+                  <div class="text-center mb-4">
+                    <i class="fas fa-project-diagram text-3xl text-purple-600"></i>
+                  </div>
+                  <div class="text-sm font-medium text-slate-700 mb-3">跨维度关联</div>
+                  <div class="space-y-2 text-xs text-slate-600">
+                    <div class="flex items-center space-x-2">
+                      <div class="w-3 h-3 bg-red-400 rounded-full"></div>
+                      <span>工作压力 ↑</span>
+                    </div>
+                    <div class="flex items-center space-x-2 ml-4">
+                      <i class="fas fa-arrow-down text-red-400"></i>
+                      <span>睡眠质量 ↓</span>
+                    </div>
+                    <div class="flex items-center space-x-2 ml-4">
+                      <i class="fas fa-arrow-down text-red-400"></i>
+                      <span>情绪状态 ↓</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Interactivity -->
+          <div>
+            <h3 class="font-canela text-3xl font-bold text-slate-800 mb-8">动态与交互性</h3>
+            <div class="grid md:grid-cols-3 gap-8">
+              <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-sync text-blue-600"></i>
+                  </div>
+                  <h4 class="font-canela text-xl font-bold text-slate-800">实时同步</h4>
+                </div>
+                <p class="text-slate-600 mb-4 text-sm">
+                  新上传信息能实时反映在可视化中，增强用户的参与感和掌控感。
+                </p>
+                <div class="flex items-center space-x-2 text-sm text-blue-600">
+                  <i class="fas fa-check-circle"></i>
+                  <span>即时更新</span>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-mouse-pointer text-green-600"></i>
+                  </div>
+                  <h4 class="font-canela text-xl font-bold text-slate-800">交互式探索</h4>
+                </div>
+                <p class="text-slate-600 mb-4 text-sm">
+                  用户可点击、缩放、筛选视图，主动探索数据，而非被动接收信息。
+                </p>
+                <div class="flex items-center space-x-2 text-sm text-green-600">
+                  <i class="fas fa-hand-pointer"></i>
+                  <span>主动探索</span>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="flex items-center space-x-3 mb-4">
+                  <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-cog text-purple-600"></i>
+                  </div>
+                  <h4 class="font-canela text-xl font-bold text-slate-800">个性化定制</h4>
+                </div>
+                <p class="text-slate-600 mb-4 text-sm">
+                  用户可自定义视图和仪表盘，确保系统满足个性化需求。
+                </p>
+                <div class="flex items-center space-x-2 text-sm text-purple-600">
+                  <i class="fas fa-user-cog"></i>
+                  <span>个性定制</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Conclusion -->
+      <section id="conclusion" class="py-20 bg-white">
+        <div class="container mx-auto px-8 max-w-4xl">
+          <header class="mb-16">
+            <h2 class="font-canela text-5xl font-bold text-slate-800 mb-6">总结</h2>
+            <p class="text-xl text-slate-600">
+              个人主观意识可视化系统通过理论框架与技术实现的完美结合，构建了一个能够真正"同步"和"理解"用户精神世界的数字伴侣。
+            </p>
+          </header>
+
+          <div class="space-y-12">
+            <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8">
+              <h3 class="font-canela text-2xl font-bold text-slate-800 mb-6">核心架构优势</h3>
+              <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                  <h4 class="font-semibold text-slate-700 mb-3">理论深度</h4>
+                  <ul class="space-y-2 text-slate-600 text-sm">
+                    <li class="flex items-start space-x-2">
+                      <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                      <span>意识四层次元模型提供动态递归框架</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                      <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                      <span>DIKWP模型实现认知演化过程</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                      <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                      <span>多维度分类确保内容全面覆盖</span>
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-slate-700 mb-3">技术实现</h4>
+                  <ul class="space-y-2 text-slate-600 text-sm">
+                    <li class="flex items-start space-x-2">
+                      <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                      <span>模块化框架支持灵活扩展</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                      <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                      <span>可视化技术实现深度洞察</span>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                      <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                      <span>反馈机制促进系统持续优化</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-slate-50 rounded-2xl p-8">
+              <h3 class="font-canela text-2xl font-bold text-slate-800 mb-6">未来发展愿景</h3>
+              <div class="prose prose-lg max-w-none text-slate-600">
+                <p class="mb-4">
+                  这个系统最终将成为一个能够与用户共同成长的<strong class="text-slate-800">"数字心智伴侣"</strong>。通过持续的数据积累和分析，系统将越来越"懂"用户，提供越来越个性化和精准的服务。
+                </p>
+                <p class="mb-4">
+                  用户与系统的交互不仅是数据的输入和输出，更是一个协同进化的过程。用户的元认知反馈成为系统迭代优化的最重要依据，而系统的智能化分析又帮助用户实现更深层次的自我理解和成长。
+                </p>
+                <p>
+                  最终，这个系统将帮助用户在纷繁复杂的意识世界中，找到属于自己的方向和答案，实现从被动到主动、从受困到自由的自我超越。
+                </p>
+              </div>
+            </div>
+
+            <div class="text-center">
+              <div class="inline-flex items-center space-x-4 text-slate-500">
+                <i class="fas fa-brain text-2xl text-blue-600"></i>
+                <span class="text-lg font-medium">理解自己，从这里开始</span>
+                <i class="fas fa-arrow-right text-xl text-blue-600"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="bg-slate-800 text-white py-12">
+        <div class="container mx-auto px-8 max-w-4xl">
+          <div class="text-center">
+            <h3 class="font-canela text-2xl font-bold mb-4">参考文献</h3>
+            <div class="grid md:grid-cols-2 gap-4 text-sm text-slate-300">
+              <div class="space-y-2">
+                <p>[1] <a href="https://m.tech.china.com/digi/digi/gdxv/2025/1018/1749438.html" class="hover:text-blue-400 transition-colors">意识四层次元模型理论基础</a>
+                </p>
+                <p>[2] <a href="https://m.tech.china.com/digi/articles/20250917/202509171733294.html" class="hover:text-blue-400 transition-colors">意识层次动态递归特性</a>
+                </p>
+                <p>[3] <a href="https://zhuanlan.zhihu.com/p/412895455" class="hover:text-blue-400 transition-colors">DIKWP模型与知识复利效应</a>
+                </p>
+                <p>[4] <a href="https://arxiv.org/html/2510.01864v1" class="hover:text-blue-400 transition-colors">模块化意识理论框架</a>
+                </p>
+                <p>[5] <a href="https://www.mdpi.com/2076-3417/12/4/1903" class="hover:text-blue-400 transition-colors">个人语义记忆模型</a>
+                </p>
+              </div>
+              <div class="space-y-2">
+                <p>[6] <a href="https://zhuanlan.zhihu.com/p/570896440" class="hover:text-blue-400 transition-colors">自我认知理论基础</a>
+                </p>
+                <p>[7] <a href="https://zhuanlan.zhihu.com/p/37166759" class="hover:text-blue-400 transition-colors">个人门户系统架构</a>
+                </p>
+                <p>[8] <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10984189/" class="hover:text-blue-400 transition-colors">数据驱动自适应系统</a>
+                </p>
+                <p>[9] <a href="https://juejin.cn/post/7390184494098333750" class="hover:text-blue-400 transition-colors">数据导向系统架构</a>
+                </p>
+                <p>[10] <a href="https://zhuanlan.zhihu.com/p/231513286" class="hover:text-blue-400 transition-colors">知识图谱构建方法</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add active state to TOC links based on scroll position
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section[id]');
+            const tocLinks = document.querySelectorAll('.toc-fixed a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= (sectionTop - 200)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.classList.remove('bg-blue-100', 'text-blue-700');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('bg-blue-100', 'text-blue-700');
+                }
+            });
+        });
+
+        // Add hover effects to model cards
+        document.querySelectorAll('.model-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateX(8px)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateX(0)';
+            });
+        });
+    </script>
+  </body>
+
+</html>
