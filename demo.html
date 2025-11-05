@@ -1,271 +1,152 @@
 <!DOCTYPE html>
-<!-- saved from url=(0063)https://show.17sucai.com/preview/1266961/2018-07-07/m/demo.html -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>层叠视觉效果</title>
+		<style>
+			/* 设置 body 样式，使其充满整个视口并居中显示内容 */
+			body {
+				margin: 0;
+				height: 100vh;
+				width: 100vw;
+				background: #000000;
+				overflow: hidden;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
 
-<title>等距菜单</title>
+			* {
+				box-sizing: border-box;
+			}
 
-<style>
-@import url('https://fonts.googleapis.com/css?family=Open+Sans:700');
+			/* 定义容器的样式，包括 3D 旋转效果 */
+			.container {
+				position: relative;
+				transform: rotateX(60deg) rotateY(0deg) rotateZ(-45deg);
+				width: 200px;
+				height: 200px;
+			}
 
+			/* 定义层的基础样式，包括尺寸、背景色、边框和过渡效果 */
+			.layer {
+				position: absolute;
+				width: 200px;
+				height: 200px;
+				background: rgba(255, 255, 255, 0.7);
+				border: 1px solid #ffffff;
+				transition: all 0.5s ease-out;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				font-family: 'Open Sans', sans-serif;
+				font-size: 2rem;
+				font-weight: 700;
+			}
 
-body {
-	margin:0;
-	height:100vh;
-	width:100vw;
-	background:#000000;
-	overflow:hidden;
-}
-
-*{
-	box-sizing:border-box;
-}
-
-#page{
-	width:100%;
-	height:100%;
-	display:flex;
-	justify-content:center;
-	align-items:center;
-}
-
-
-#center {
-	position:absolute;
-	z-index:5;
-   background-color: #ffff64;	
-	transition:0.25s;
-	animation:float 1s infinite;
-}
-
-#center .icon{
-	padding:40px 0px;
-	position:relative;
-	height:100%;
-	width:100%;
-	display:flex;
-	flex-direction:column;
-	justify-content:space-around;
-	align-items:center;
-/* 	transform: skew(-50deg); */
-}
-
-.bar{
-	height:15px;
-	width:50%;
-/* 	border-radius:25px; */
-	background:#000000;
-}
-
-.btn{
-	width: 200px;
-   height: 200px;
-}
-
-nav{
-	position:relative;
-	transform: rotateX(60deg) rotateY(0deg) rotateZ(-45deg);
-/* 	transform: rotate(-30deg) skew(30deg,0deg); */
-	width:200px;
-	height:200px;
-}
-
-.btn.item{
-	position:absolute;
-	top:0;
-	z-index:1;
-	transition: all 0.25s ease-out;
-	left:0px;
-	top:0px;
-	opacity:1;
-}
-
-.btn.item:not(.opened){
-	background:rgba(255, 255, 255,0.5);
-}
-
-#center:hover{
-	cursor:pointer;
-	background:#ff1464 !important;
-}
-
-#center:hover .bar{
-	background:#ffffff;
-}
-
-.btn.item span:hover{
-	cursor:pointer;
-	background:#ff1464 !important;
-	color:#ffffff !important;
-}
-
-.btn.item span{
-	opacity:0;
-}
-
-.btn.item.opened span{
-	opacity:1;
-	background:#ffff64;
-	color:#000000;
-	padding:0 15px;
-}
-
-.btn.item.opened{
-	font-family:'open sans';
-
-	font-size:5rem;
-	display:flex;
-	justify-content:center;
-	align-items:center;
-}
-
-#up,#bottom{
-	top:20px;
-	left:-20px;
-}
-
-#right,#left{
-	top:40px;
-	left:-40px;
-}
-
-#up.opened{
-	top:-100%;
-	left:0;
-}
-
-#right.opened{
-	left:140%;
-	top:0;
-}
-
-#bottom.opened{
-	top:100%;
-	left:0;
-}
-
-#left.opened{
-	left:-140%;
-	top:0;
-}
-
-#center.close .bar.top{
-	position:absolute;
-	top:40px;
-	left:50px;
-	transform-origin:center left;
-	transform:rotateZ(45deg);
-	width:70%;
-}
-
-#center.close .bar.bottom{
-	position:absolute;
-	bottom:40px;
-	left:50px;
-	transform-origin:center left;
-	transform:rotateZ(-45deg);
-	width:70%;
-}
-
-#center.close .bar.middle{
-	width:0
-}
+			/* 分别设置每一层的位置和层级 */
+			.layer:nth-child(1) {
+				top: 0;
+				left: 0;
+				z-index: 1;
+			}
 
 
-@keyframes float {
-  0%,100% {
-    top: 0px;
-	 left:0px;
-  }
 
-  50% {
-    top: -5px;
-	 left:5px;
-  }
-}
-</style>
 
-</head>
-<body>
+			.layer:nth-child(2) {
+				top: -10px;
+				left: 10px;
+				z-index: 2;
+			}
 
-<div id="page">
-	<nav>
-		<div id="center" class="btn">
-			<h1>测试
-            </h1>
+
+
+
+			.layer:nth-child(3) {
+				top: -40px;
+				left: 40px;
+				z-index: 3;
+			}
+
+			.layer:nth-child(4) {
+				top: -60px;
+				left: 60px;
+				z-index: 4;
+			}
+
+			/* 设置各层背景色，参考 demo.html 的色调 */
+			.layer:nth-child(odd) {
+				background-color: #ffff64;
+			}
+
+			.layer:nth-child(even) {
+				background-color: rgba(255, 255, 255, 0.5);
+			}
+
+			/* 添加浮动动画效果，参考 demo.html */
+			@keyframes float {
+
+				0%,
+				100% {
+					transform: translateY(0) translateX(0);
+				}
+
+				50% {
+					transform: translateY(-5px) translateX(5px);
+				}
+			}
+
+			
+			
+			
+			/* 为各层添加浮动动画，并设置不同的延迟 */
+			/* 
+			
+			.layer:nth-child(1) {
+				animation: float 2s infinite;
+			}
+			
+			.layer:nth-child(2) {
+				animation: float 2s infinite 0.2s;
+			}
+			
+			.layer:nth-child(3) {
+				animation: float 2s infinite 0.4s;
+			}
+			
+			.layer:nth-child(4) {
+				animation: float 2s infinite 0.6s;
+			} */
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+		</style>
+	</head>
+	<body>
+		<!-- 3D 容器，包含多个层叠的层 -->
+		<div class="container">
+			<!-- 第一层，带有文本内容 -->
+			<!-- <div class="layer" >demo</div> -->
+			<!-- 第二层 -->
+			<!-- <div class="layer"></div> -->
+			<!-- 第三层 -->
+			<div class="layer" 
+			style="width: 400px; height: 400px;
+			top: 50%; left: 50%; transform: translate(-50%, -50%);"
+			"></div>
+			<!-- 第四层 -->
+			<div class="layer" style="background-color: aquamarine;"></div>
 		</div>
-		<div id="center" class="btn">
-			<h1>测试
-            </h1>
-		</div><div id="up" class="btn item">
-			<span>Contacts</span>
-		</div>
-		<div id="up" class="btn item">
-			<span>Contacts</span>
-		</div><div id="right" class="btn item">
-			<span>About</span>
-		</div>
-		<div id="right" class="btn item">
-			<span>About</span>
-		</div><div id="bottom" class="btn item">
-			<span>Widgets</span>
-		</div>
-		<div id="bottom" class="btn item">
-			<span>Widgets</span>
-		</div><div id="left" class="btn item">
-			<span>Home</span>
-		</div>
-	<div id="left" class="btn item">
-			<span>Home</span>
-		</div></nav>
-</div>
+	</body>
+</html>
 
-<script>
-const navItems = document.querySelectorAll('nav .item');
-
-document.querySelector('#center').addEventListener('click',function(){
-	for(let i=0;i<navItems.length;i++){
-		navItems[i].classList.toggle('opened')
-	}
-	document.querySelector('#center').classList.toggle('close')
-})
-</script>
-
-
-
-</body><body>
-
-<div id="page">
-	<nav>
-		<div id="center" class="btn">
-			<h1>测试
-            </h1>
-		</div>
-		<div id="up" class="btn item">
-			<span>Contacts</span>
-		</div>
-		<div id="right" class="btn item">
-			<span>About</span>
-		</div>
-		<div id="bottom" class="btn item">
-			<span>Widgets</span>
-		</div>
-		<div id="left" class="btn item">
-			<span>Home</span>
-		</div>
-	</nav>
-</div>
-
-<script>
-const navItems = document.querySelectorAll('nav .item');
-
-document.querySelector('#center').addEventListener('click',function(){
-	for(let i=0;i<navItems.length;i++){
-		navItems[i].classList.toggle('opened')
-	}
-	document.querySelector('#center').classList.toggle('close')
-})
-</script>
-
-
-
-</body></html>
