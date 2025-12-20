@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>个人人生同步系统：实现逻辑与模型架构重构</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+		<script src="mermaid.min.js"></script>
+		<style>
+			:root {
+				--sage-green: #9CAF88;
+				--warm-beige: #F5F1E8;
+				--deep-charcoal: #2D3436;
+				--soft-gray: #E8E6E1;
+				--accent-blue: #6B7D8C;
+			}
+
+			body {
+				font-family: 'Inter', sans-serif;
+				background: linear-gradient(135deg, var(--warm-beige) 0%, #FAFAFA 100%);
+				color: var(--deep-charcoal);
+				overflow-x: hidden;
+			}
+
+			img {
+				max-width: 100%;
+				height: auto;
+			}
+
+			.serif-heading {
+				font-family: 'Noto Serif SC', serif;
+			}
+
+			.hero-gradient {
+				background: linear-gradient(135deg,
+						rgba(156, 175, 136, 0.9) 0%,
+						rgba(107, 125, 140, 0.8) 50%,
+						rgba(45, 52, 54, 0.9) 100%);
+			}
+
+			.toc-fixed {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 280px;
+				height: 100vh;
+				background: rgba(255, 255, 255, 0.95);
+				backdrop-filter: blur(10px);
+				border-right: 1px solid var(--soft-gray);
+				z-index: 1000;
+				overflow-y: auto;
+				padding: 2rem 1.5rem;
+			}
+
+			.main-content {
+				margin-left: 280px;
+				min-height: 100vh;
+			}
+
+			.section-card {
+				background: rgba(255, 255, 255, 0.8);
+				backdrop-filter: blur(10px);
+				border: 1px solid var(--soft-gray);
+				transition: all 0.3s ease;
+			}
+
+			.section-card:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+			}
+
+			.bento-grid {
+				display: grid;
+				grid-template-columns: 2fr 1fr;
+				gap: 2rem;
+				align-items: start;
+			}
+
+			.citation-link {
+				color: var(--accent-blue);
+				text-decoration: none;
+				font-weight: 500;
+				border-bottom: 1px dotted var(--accent-blue);
+			}
+
+			.citation-link:hover {
+				color: var(--deep-charcoal);
+				border-bottom-style: solid;
+			}
+
+			.highlight-box {
+				background: linear-gradient(135deg, rgba(156, 175, 136, 0.1), rgba(107, 125, 140, 0.1));
+				border-left: 4px solid var(--sage-green);
+			}
+
+			.mermaid-container {
+				display: flex;
+				justify-content: center;
+				min-height: 300px;
+				max-height: 800px;
+				background: #ffffff;
+				border: 2px solid #e5e7eb;
+				border-radius: 12px;
+				padding: 30px;
+				margin: 30px 0;
+				box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+				position: relative;
+				overflow: hidden;
+			}
+
+			.mermaid-container .mermaid {
+				width: 100%;
+				max-width: 100%;
+				height: 100%;
+				cursor: grab;
+				transition: transform 0.3s ease;
+				transform-origin: center center;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				touch-action: none;
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+
+			.mermaid-container .mermaid svg {
+				max-width: 100%;
+				height: 100%;
+				display: block;
+				margin: 0 auto;
+			}
+
+			.mermaid-container .mermaid:active {
+				cursor: grabbing;
+			}
+
+			.mermaid-container.zoomed .mermaid {
+				height: 100%;
+				width: 100%;
+				cursor: grab;
+			}
+
+			.mermaid-controls {
+				position: absolute;
+				top: 15px;
+				right: 15px;
+				display: flex;
+				gap: 10px;
+				z-index: 20;
+				background: rgba(255, 255, 255, 0.95);
+				padding: 8px;
+				border-radius: 8px;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+			}
+
+			.mermaid-control-btn {
+				background: #ffffff;
+				border: 1px solid #d1d5db;
+				border-radius: 6px;
+				padding: 10px;
+				cursor: pointer;
+				transition: all 0.2s ease;
+				color: #374151;
+				font-size: 14px;
+				min-width: 36px;
+				height: 36px;
+				text-align: center;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.mermaid-control-btn:hover {
+				background: #f8fafc;
+				border-color: #3b82f6;
+				color: #3b82f6;
+				transform: translateY(-1px);
+			}
+
+			.mermaid-control-btn:active {
+				transform: scale(0.95);
+			}
+
+			/* Mermaid theme customization for better contrast */
+			.mermaid .node rect,
+			.mermaid .node circle,
+			.mermaid .node polygon {
+				fill: #ffffff !important;
+				stroke: var(--deep-charcoal) !important;
+				stroke-width: 2px !important;
+			}
+
+			.mermaid .node .label,
+			.mermaid .nodeLabel,
+			.mermaid .label {
+				color: var(--deep-charcoal) !important;
+				font-weight: 500 !important;
+				font-size: 13px !important;
+				fill: var(--deep-charcoal) !important;
+			}
+
+			.mermaid .edgePath .path {
+				stroke: var(--accent-blue) !important;
+				stroke-width: 2px !important;
+			}
+
+			.mermaid .edgeLabel {
+				background-color: rgba(255, 255, 255, 0.9) !important;
+				color: var(--deep-charcoal) !important;
+				font-weight: 500 !important;
+			}
+
+			/* Timeline specific styles with better contrast */
+			.mermaid .section0,
+			.mermaid .section1,
+			.mermaid .section2,
+			.mermaid .section3 {
+				fill: var(--sage-green) !important;
+				opacity: 0.8 !important;
+			}
+
+			.mermaid .cScale0,
+			.mermaid .cScale1,
+			.mermaid .cScale2 {
+				fill: var(--deep-charcoal) !important;
+				color: var(--deep-charcoal) !important;
+			}
+
+			.mermaid .timeline-text {
+				fill: var(--deep-charcoal) !important;
+				font-weight: 500 !important;
+			}
+
+			/* Flowchart specific node colors with high contrast */
+			.mermaid .node[class*="default"] rect {
+				fill: #ffffff !important;
+				stroke: var(--deep-charcoal) !important;
+			}
+
+			.mermaid .node[class*="default"] .label {
+				fill: var(--deep-charcoal) !important;
+				color: var(--deep-charcoal) !important;
+			}
+
+			@media (max-width: 1024px) {
+				.toc-fixed {
+					transform: translateX(-100%);
+					transition: transform 0.3s ease;
+				}
+
+				.toc-fixed.open {
+					transform: translateX(0);
+				}
+
+				.main-content {
+					margin-left: 0;
+				}
+
+				.bento-grid {
+					grid-template-columns: 1fr;
+				}
+
+				.mermaid-control-btn:not(.reset-zoom) {
+					display: none;
+				}
+
+				.mermaid-controls {
+					top: auto;
+					bottom: 15px;
+					right: 15px;
+				}
+			}
+
+			/* Additional small screen adjustments */
+			@media (max-width: 768px) {
+				.hero-gradient {
+					padding: 2rem 1rem !important;
+				}
+
+				.hero-gradient h1 {
+					font-size: 2.5rem;
+					line-height: 1.2;
+				}
+
+				.hero-gradient p {
+					font-size: 1rem;
+				}
+
+				.bento-grid>div {
+					padding: 1.5rem;
+				}
+
+				.grid.md\:grid-cols-3 {
+					grid-template-columns: 1fr;
+				}
+
+				.grid.md\:grid-cols-2 {
+					grid-template-columns: 1fr;
+				}
+
+				.section-card {
+					padding: 1.5rem;
+				}
+
+				.mermaid-container {
+					padding: 15px;
+				}
+			}
+		</style>
+		<base target="_blank">
+	</head>
+
+	<body>
+		<!-- Mobile TOC Toggle -->
+		<button id="toc-toggle" class="fixed top-4 left-4 z-50 lg:hidden bg-white p-2 rounded-lg shadow-lg">
+			<i class="fas fa-bars"></i>
+		</button>
+
+		<!-- Table of Contents -->
+		<nav id="toc" class="toc-fixed">
+			<div class="mb-8">
+				<h3 class="serif-heading text-lg font-semibold text-gray-800 mb-4">目录导航</h3>
+				<div class="space-y-2">
+					<a href="#overview"
+						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">系统概览</a>
+					<a href="#core-concepts"
+						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">核心理念</a>
+					<a href="#architecture"
+						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">架构模型</a>
+					<a href="#modules"
+						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">功能模块</a>
+					<a href="#data-model"
+						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">数据模型</a>
+					<a href="#ui-design"
+						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">界面设计</a>
+					<a href="#implementation"
+						class="block py-2 px-3 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors">实现逻辑</a>
+				</div>
+			</div>
+
+			<div class="border-t pt-4">
+				<p class="text-xs text-gray-500 mb-2">参考资料</p>
+				<div class="space-y-1">
+					<a href="https://xpro.mit.edu/courses/course-v1:xPRO+SysEngx1/"
+						class="citation-link text-xs block">MIT xPRO 系统架构</a>
+					<a href="https://tools.eq4c.com/ai-prompts/chatgpt-prompt-personal-life-productivity-operating-system-life-os/"
+						class="citation-link text-xs block">Life OS 概念</a>
+					<a href="https://www.notionlifedesign.com/" class="citation-link text-xs block">Notion Life
+						Design</a>
+					<a href="https://nicky-chin.cn/2020/11/13/im-timeline/" class="citation-link text-xs block">Timeline
+						模型</a>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<main class="main-content">
+			<!-- Hero Section -->
+			<section id="overview" class="hero-gradient relative overflow-hidden">
+				<div class="absolute inset-0 opacity-10">
+					<img src="https://kimi-img.moonshot.cn/pub/icon/spinner.svg" alt="抽象神经网络背景图"
+						class="w-full h-full object-cover" size="wallpaper" aspect="wide" query="抽象神经网络背景"
+						referrerpolicy="no-referrer" />
+				</div>
+
+				<div class="relative z-10 py-16 px-8">
+					<div class="bento-grid max-w-7xl mx-auto">
+						<div class="space-y-8">
+							<div class="space-y-4">
+								<h1 class="serif-heading text-5xl lg:text-6xl font-bold text-white leading-tight">
+									<span class="italic">个人人生</span>
+									<br>
+									<span class="text-4xl lg:text-5xl">同步系统</span>
+								</h1>
+								<p class="text-xl text-gray-200 max-w-2xl leading-relaxed">
+									构建高度个性化、仅供开发者本人使用的综合性人生管理平台，实现对个人生活、精神状态、能力发展的全面数字化"同步"
+								</p>
+							</div>
+
+							<div class="flex flex-wrap gap-4">
+								<span class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm">
+									<i class="fas fa-user mr-2"></i>自用系统
+								</span>
+								<span class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm">
+									<i class="fas fa-sync mr-2"></i>实时同步
+								</span>
+								<span class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm">
+									<i class="fas fa-expand-arrows-alt mr-2"></i>可扩展架构
+								</span>
+							</div>
+						</div>
+
+						<div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 space-y-6">
+							<h3 class="serif-heading text-2xl font-semibold text-white mb-4">核心洞察</h3>
+							<div class="space-y-4">
+								<div class="flex items-start space-x-3">
+									<div class="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
+									<p class="text-gray-200 text-sm">"同步"而非"状态"：关注动态过程而非静态快照</p>
+								</div>
+								<div class="flex items-start space-x-3">
+									<div class="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
+									<p class="text-gray-200 text-sm">六层分层模型构建人生宏观框架</p>
+								</div>
+								<div class="flex items-start space-x-3">
+									<div class="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
+									<p class="text-gray-200 text-sm">事件驱动模型实现真正的人生同步</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Core Concepts Section -->
+			<section id="core-concepts" class="py-16 px-8">
+				<div class="max-w-6xl mx-auto">
+					<h2 class="serif-heading text-4xl font-bold text-center mb-12">核心理念与系统目标</h2>
+
+					<div class="grid md:grid-cols-2 gap-8 mb-16">
+						<div class="section-card rounded-2xl p-8">
+							<div class="flex items-center mb-6">
+								<div
+									class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mr-4">
+									<i class="fas fa-user-cog text-white text-xl"></i>
+								</div>
+								<h3 class="serif-heading text-2xl font-semibold">系统定位</h3>
+							</div>
+							<p class="text-gray-700 leading-relaxed mb-4">
+								本系统旨在构建一个<strong>高度个性化、仅供开发者本人使用的综合性人生管理平台</strong>。其核心定位并非一个面向公众的服务产品，而是一个深度服务于个人成长、自我认知与人生规划的数字化工具。
+							</p>
+							<div class="highlight-box rounded-lg p-4">
+								<p class="text-sm font-medium text-gray-800">
+									<i class="fas fa-bullseye mr-2 text-green-600"></i>
+									首要目标：实现对个人生活、精神状态、能力发展乃至整个人生轨迹的全面数字化"同步"
+								</p>
+							</div>
+						</div>
+
+						<div class="section-card rounded-2xl p-8">
+							<div class="flex items-center mb-6">
+								<div
+									class="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center mr-4">
+									<i class="fas fa-sync-alt text-white text-xl"></i>
+								</div>
+								<h3 class="serif-heading text-2xl font-semibold">同步理念</h3>
+							</div>
+							<p class="text-gray-700 leading-relaxed mb-4">
+								系统的核心驱动力在于实现<strong>"同步"（Synchronization），而非仅仅记录"状态"（State）</strong>。这一理念的根本区别在于，系统关注的不是静态的快照，而是动态的过程和关联。
+							</p>
+							<div class="space-y-2">
+								<div class="flex items-center">
+									<i class="fas fa-circle text-blue-500 text-xs mr-3"></i>
+									<span class="text-sm">数据层面的实时记录与历史追溯</span>
+								</div>
+								<div class="flex items-center">
+									<i class="fas fa-circle text-blue-500 text-xs mr-3"></i>
+									<span class="text-sm">逻辑层面的状态关联与影响分析</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- System Objectives -->
+					<div class="section-card rounded-2xl p-8">
+						<h3 class="serif-heading text-2xl font-semibold mb-6 text-center">系统目标层级</h3>
+						<div class="grid md:grid-cols-3 gap-6">
+							<div class="text-center">
+								<div
+									class="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+									<i class="fas fa-eye text-white text-2xl"></i>
+								</div>
+								<h4 class="font-semibold mb-2">全面映射</h4>
+								<p class="text-sm text-gray-600">实现个人人生与精神世界的数字化孪生</p>
+							</div>
+							<div class="text-center">
+								<div
+									class="w-16 h-16 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+									<i class="fas fa-brain text-white text-2xl"></i>
+								</div>
+								<h4 class="font-semibold mb-2">动态分析</h4>
+								<p class="text-sm text-gray-600">通过数据挖掘发现被忽略的细节和规律</p>
+							</div>
+							<div class="text-center">
+								<div
+									class="w-16 h-16 bg-gradient-to-br from-red-400 to-red-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+									<i class="fas fa-chart-line text-white text-2xl"></i>
+								</div>
+								<h4 class="font-semibold mb-2">前瞻指导</h4>
+								<p class="text-sm text-gray-600">基于趋势预测生成个性化发展建议</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Architecture Section -->
+			<section id="architecture" class="py-16 px-8 bg-gray-50">
+				<div class="max-w-6xl mx-auto">
+					<h2 class="serif-heading text-4xl font-bold text-center mb-12">总体架构模型</h2>
+
+					<!-- Architecture Diagram -->
+					<div class="mb-12">
+						<div class="mermaid-container">
+							<div class="mermaid-controls">
+								<button class="mermaid-control-btn zoom-in" title="放大">
+									<i class="fas fa-search-plus"></i>
+								</button>
+								<button class="mermaid-control-btn zoom-out" title="缩小">
+									<i class="fas fa-search-minus"></i>
+								</button>
+								<button class="mermaid-control-btn reset-zoom" title="重置">
+									<i class="fas fa-expand-arrows-alt"></i>
+								</button>
+								<button class="mermaid-control-btn fullscreen" title="全屏查看">
+									<i class="fas fa-expand"></i>
+								</button>
+							</div>
+							<div class="mermaid">
+								graph TB
+								A["生命体中枢
+								<br />Self Core"] --> B["根基层
+								<br />精神"]
+								A --> C["支柱层
+								<br />健康"]
+								A --> D["驱动层
+								<br />学习"]
+								A --> E["网络层
+								<br />关系"]
+								A --> F["目标层
+								<br />成就"]
+								A --> G["顶层
+								<br />意义"]
+								A --> H["调节环
+								<br />反思"]
+
+								B --> I["价值观"]
+								B --> J["人生使命"]
+
+								C --> K["身体健康"]
+								C --> L["心理状态"]
+
+								D --> M["知识管理"]
+								D --> N["技能培养"]
+
+								E --> O["家庭关系"]
+								E --> P["社交网络"]
+
+								F --> Q["财富管理"]
+								F --> R["职业发展"]
+
+								G --> S["人生意义"]
+								G --> T["长期愿景"]
+
+								H --> U["每周复盘"]
+								H --> V["系统调整"]
+
+								style A fill:#9CAF88,stroke:#2D3436,stroke-width:3px,color:#fff
+								style B fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
+								style C fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
+								style D fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
+								style E fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
+								style F fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
+								style G fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
+								style H fill:#F5F1E8,stroke:#2D3436,stroke-width:2px,color:#2D3436
+							</div>
+						</div>
+					</div>
+
+					<!-- Architecture Principles -->
+					<div class="grid md:grid-cols-2 gap-8 mb-12">
+						<div class="section-card rounded-2xl p-8">
+							<h3 class="serif-heading text-2xl font-semibold mb-6">设计原则</h3>
+							<div class="space-y-4">
+								<div class="highlight-box rounded-lg p-4">
+									<h4 class="font-semibold mb-2">人生架构方法论</h4>
+									<p class="text-sm text-gray-700">
+										借鉴<a href="https://xpro.mit.edu/courses/course-v1:xPRO+SysEngx1/"
+											class="citation-link">MIT xPRO系统架构思想</a>，将人生视为需要精心设计的复杂系统
+									</p>
+								</div>
+								<div class="highlight-box rounded-lg p-4">
+									<h4 class="font-semibold mb-2">个人操作系统</h4>
+									<p class="text-sm text-gray-700">
+										融合<a href="https://tools.eq4c.com/ai-prompts/chatgpt-prompt-personal-life-productivity-operating-system-life-os/"
+											class="citation-link">Life OS模块化思想</a>，实现灵活扩展
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card rounded-2xl p-8">
+							<h3 class="serif-heading text-2xl font-semibold mb-6">模块化优势</h3>
+							<div class="space-y-3">
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-puzzle-piece text-green-600"></i>
+									<span class="text-sm">灵活组合与扩展</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-shield-alt text-green-600"></i>
+									<span class="text-sm">模块间松耦合</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-cogs text-green-600"></i>
+									<span class="text-sm">独立维护升级</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-user-edit text-green-600"></i>
+									<span class="text-sm">个性化定制</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Six-Layer Model -->
+					<div class="section-card rounded-2xl p-8">
+						<h3 class="serif-heading text-2xl font-semibold mb-8 text-center">六层分层模型</h3>
+						<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+							<div class="border-l-4 border-purple-400 pl-4">
+								<h4 class="font-semibold text-purple-700 mb-2">根基层 - 精神</h4>
+								<p class="text-sm text-gray-600">价值观、信仰、人生使命</p>
+							</div>
+							<div class="border-l-4 border-green-400 pl-4">
+								<h4 class="font-semibold text-green-700 mb-2">支柱层 - 健康</h4>
+								<p class="text-sm text-gray-600">身体与心理健康、精力管理</p>
+							</div>
+							<div class="border-l-4 border-blue-400 pl-4">
+								<h4 class="font-semibold text-blue-700 mb-2">驱动层 - 学习</h4>
+								<p class="text-sm text-gray-600">知识、技能与学习能力</p>
+							</div>
+							<div class="border-l-4 border-orange-400 pl-4">
+								<h4 class="font-semibold text-orange-700 mb-2">网络层 - 关系</h4>
+								<p class="text-sm text-gray-600">人际关系与社交网络</p>
+							</div>
+							<div class="border-l-4 border-red-400 pl-4">
+								<h4 class="font-semibold text-red-700 mb-2">目标层 - 成就</h4>
+								<p class="text-sm text-gray-600">财富、职业与物质目标</p>
+							</div>
+							<div class="border-l-4 border-indigo-400 pl-4">
+								<h4 class="font-semibold text-indigo-700 mb-2">顶层 - 意义</h4>
+								<p class="text-sm text-gray-600">人生意义与长期愿景</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Modules Section -->
+			<section id="modules" class="py-16 px-8">
+				<div class="max-w-6xl mx-auto">
+					<h2 class="serif-heading text-4xl font-bold text-center mb-12">核心功能模块设计</h2>
+
+					<!-- Module Categories -->
+					<div class="grid md:grid-cols-2 gap-8 mb-12">
+						<div class="section-card rounded-2xl p-8">
+							<div class="flex items-center mb-6">
+								<div
+									class="w-12 h-12 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-xl flex items-center justify-center mr-4">
+									<i class="fas fa-rocket text-white text-xl"></i>
+								</div>
+								<h3 class="serif-heading text-2xl font-semibold">初始化模块</h3>
+							</div>
+
+							<div class="space-y-4">
+								<div class="bg-gray-50 rounded-lg p-4">
+									<h4 class="font-semibold mb-2">当前人生蓝图</h4>
+									<p class="text-sm text-gray-600">全面盘点身体健康、心理状态、知识技能等现状</p>
+								</div>
+								<div class="bg-gray-50 rounded-lg p-4">
+									<h4 class="font-semibold mb-2">未来人生蓝图</h4>
+									<p class="text-sm text-gray-600">描绘理想生活状态，明确核心价值观与人生使命</p>
+								</div>
+								<div class="bg-gray-50 rounded-lg p-4">
+									<h4 class="font-semibold mb-2">行为评估矩阵</h4>
+									<p class="text-sm text-gray-600">将目标分解为可衡量的关键行为指标(KBIs)</p>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card rounded-2xl p-8">
+							<div class="flex items-center mb-6">
+								<div
+									class="w-12 h-12 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center mr-4">
+									<i class="fas fa-sync text-white text-xl"></i>
+								</div>
+								<h3 class="serif-heading text-2xl font-semibold">同步记录模块</h3>
+							</div>
+
+							<div class="space-y-4">
+								<div class="bg-gray-50 rounded-lg p-4">
+									<h4 class="font-semibold mb-2">事件驱动模型</h4>
+									<p class="text-sm text-gray-600">以"人生事件"为基本单位，捕捉变化连续性</p>
+								</div>
+								<div class="bg-gray-50 rounded-lg p-4">
+									<h4 class="font-semibold mb-2">时间轴视图</h4>
+									<p class="text-sm text-gray-600">借鉴<a
+											href="https://nicky-chin.cn/2020/11/13/im-timeline/"
+											class="citation-link">Timeline模型</a>，记录与追溯人生轨迹</p>
+								</div>
+								<div class="bg-gray-50 rounded-lg p-4">
+									<h4 class="font-semibold mb-2">智能输入机制</h4>
+									<p class="text-sm text-gray-600">主动输入与系统辅助提示相结合</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Analysis and Planning Modules -->
+					<div class="grid md:grid-cols-2 gap-8">
+						<div class="section-card rounded-2xl p-8">
+							<div class="flex items-center mb-6">
+								<div
+									class="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center mr-4">
+									<i class="fas fa-chart-bar text-white text-xl"></i>
+								</div>
+								<h3 class="serif-heading text-2xl font-semibold">分析评估模块</h3>
+							</div>
+
+							<div class="space-y-4">
+								<div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4">
+									<h4 class="font-semibold mb-2 text-purple-800">人生价值链分析</h4>
+									<p class="text-sm text-gray-700">揭示个人行为与最终价值的关系，优化资源配置</p>
+								</div>
+								<div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4">
+									<h4 class="font-semibold mb-2 text-purple-800">全面评估报告</h4>
+									<p class="text-sm text-gray-700">定期生成关键成就、趋势分析、行为洞察</p>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card rounded-2xl p-8">
+							<div class="flex items-center mb-6">
+								<div
+									class="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center mr-4">
+									<i class="fas fa-route text-white text-xl"></i>
+								</div>
+								<h3 class="serif-heading text-2xl font-semibold">规划推进模块</h3>
+							</div>
+
+							<div class="space-y-4">
+								<div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
+									<h4 class="font-semibold mb-2 text-green-800">人生路线图</h4>
+									<p class="text-sm text-gray-700">将愿景分解为可管理的阶段性目标</p>
+								</div>
+								<div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
+									<h4 class="font-semibold mb-2 text-green-800">结果链分解</h4>
+									<p class="text-sm text-gray-700">将目标层层分解为具体可执行的任务</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Data Model Section -->
+			<section id="data-model" class="py-16 px-8 bg-gray-50">
+				<div class="max-w-6xl mx-auto">
+					<h2 class="serif-heading text-4xl font-bold text-center mb-12">数据模型与同步机制</h2>
+
+					<!-- Data Model Diagram -->
+					<div class="mb-12">
+						<div class="mermaid-container">
+							<div class="mermaid-controls">
+								<button class="mermaid-control-btn zoom-in" title="放大">
+									<i class="fas fa-search-plus"></i>
+								</button>
+								<button class="mermaid-control-btn zoom-out" title="缩小">
+									<i class="fas fa-search-minus"></i>
+								</button>
+								<button class="mermaid-control-btn reset-zoom" title="重置">
+									<i class="fas fa-expand-arrows-alt"></i>
+								</button>
+								<button class="mermaid-control-btn fullscreen" title="全屏查看">
+									<i class="fas fa-expand"></i>
+								</button>
+							</div>
+							<div class="mermaid">
+								graph LR
+								A["用户输入
+								<br />User Input"] --> B["数据输入模块
+								<br />Data Input Module"]
+								B --> C["人生事件
+								<br />Life Event"]
+								C --> D["同步引擎
+								<br />Sync Engine"]
+								D --> E["人生网
+								<br />Life Web"]
+								D --> F["人生规则
+								<br />Life Rules"]
+								E --> G["节点状态更新
+								<br />Node State Update"]
+								F --> G
+								G --> H["分析引擎
+								<br />Analysis Engine"]
+								H --> I["可视化展示
+								<br />Visualization"]
+								H --> J["智能建议
+								<br />Smart Suggestions"]
+
+								E --> K["健康模块"]
+								E --> L["财务模块"]
+								E --> M["学习模块"]
+								E --> N["关系模块"]
+
+								style A fill:#E8E6E1,stroke:#2D3436,stroke-width:2px
+								style B fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
+								style C fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
+								style D fill:#9CAF88,stroke:#2D3436,stroke-width:3px,color:#fff
+								style E fill:#9CAF88,stroke:#2D3436,stroke-width:3px,color:#fff
+								style F fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
+								style G fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
+								style H fill:#6B7D8C,stroke:#fff,stroke-width:3px,color:#fff
+								style I fill:#E8E6E1,stroke:#2D3436,stroke-width:2px
+								style J fill:#E8E6E1,stroke:#2D3436,stroke-width:2px
+								style K fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
+								style L fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
+								style M fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
+								style N fill:#F5F1E8,stroke:#2D3436,stroke-width:2px
+							</div>
+						</div>
+					</div>
+
+					<!-- Data Model Components -->
+					<div class="grid md:grid-cols-3 gap-8 mb-12">
+						<div class="section-card rounded-2xl p-8">
+							<div
+								class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+								<i class="fas fa-circle-nodes text-white text-2xl"></i>
+							</div>
+							<h3 class="serif-heading text-xl font-semibold text-center mb-4">节点设计</h3>
+							<p class="text-sm text-gray-600 text-center mb-4">代表人生的各个维度与状态</p>
+							<div class="space-y-2">
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-dot-circle text-blue-500 text-xs"></i>
+									<span class="text-xs">分层归属管理</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-dot-circle text-blue-500 text-xs"></i>
+									<span class="text-xs">丰富属性定义</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-dot-circle text-blue-500 text-xs"></i>
+									<span class="text-xs">层级关系构建</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card rounded-2xl p-8">
+							<div
+								class="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+								<i class="fas fa-link text-white text-2xl"></i>
+							</div>
+							<h3 class="serif-heading text-xl font-semibold text-center mb-4">连接设计</h3>
+							<p class="text-sm text-gray-600 text-center mb-4">定义节点间的关联与影响</p>
+							<div class="space-y-2">
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-dot-circle text-green-500 text-xs"></i>
+									<span class="text-xs">方向性关系</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-dot-circle text-green-500 text-xs"></i>
+									<span class="text-xs">权重影响定义</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-dot-circle text-green-500 text-xs"></i>
+									<span class="text-xs">规则自动触发</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card rounded-2xl p-8">
+							<div
+								class="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+								<i class="fas fa-database text-white text-2xl"></i>
+							</div>
+							<h3 class="serif-heading text-xl font-semibold text-center mb-4">状态分类</h3>
+							<p class="text-sm text-gray-600 text-center mb-4">实时、预测、固定与可变</p>
+							<div class="space-y-2">
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-dot-circle text-purple-500 text-xs"></i>
+									<span class="text-xs">实时状态追踪</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-dot-circle text-purple-500 text-xs"></i>
+									<span class="text-xs">预测状态分析</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-dot-circle text-purple-500 text-xs"></i>
+									<span class="text-xs">历史状态存档</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Synchronization Mechanism -->
+					<div class="section-card rounded-2xl p-8">
+						<h3 class="serif-heading text-2xl font-semibold mb-8 text-center">同步机制实现</h3>
+						<div class="grid md:grid-cols-2 gap-8">
+							<div>
+								<h4 class="font-semibold mb-4 flex items-center">
+									<i class="fas fa-cogs text-blue-600 mr-2"></i>
+									基于规则的逻辑同步
+								</h4>
+								<div class="bg-blue-50 rounded-lg p-4 mb-4">
+									<p class="text-sm font-mono text-blue-800">
+										IF 连续三天睡眠不足6小时
+										<br>
+										THEN 精力值下降20%
+									</p>
+								</div>
+								<p class="text-sm text-gray-600">
+									用户可自定义或系统自动生成规则，实现因果关系的模拟和状态更新
+								</p>
+							</div>
+
+							<div>
+								<h4 class="font-semibold mb-4 flex items-center">
+									<i class="fas fa-project-diagram text-green-600 mr-2"></i>
+									跨模块数据联动
+								</h4>
+								<div class="space-y-2">
+									<div class="flex items-start space-x-2">
+										<i class="fas fa-arrow-right text-green-500 text-xs mt-1"></i>
+										<span class="text-sm">健康数据变化触发情绪日记提示</span>
+									</div>
+									<div class="flex items-start space-x-2">
+										<i class="fas fa-arrow-right text-green-500 text-xs mt-1"></i>
+										<span class="text-sm">财务支出自动关联活动类型</span>
+									</div>
+									<div class="flex items-start space-x-2">
+										<i class="fas fa-arrow-right text-green-500 text-xs mt-1"></i>
+										<span class="text-sm">目标进度实时反馈行为影响</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- UI Design Section -->
+			<section id="ui-design" class="py-16 px-8">
+				<div class="max-w-6xl mx-auto">
+					<h2 class="serif-heading text-4xl font-bold text-center mb-12">用户交互与视图设计</h2>
+
+					<!-- Four Views -->
+					<div class="grid md:grid-cols-2 gap-8 mb-12">
+						<div class="section-card rounded-2xl p-8">
+							<div class="flex items-center mb-6">
+								<div
+									class="w-12 h-12 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center mr-4">
+									<i class="fas fa-tachometer-alt text-white text-xl"></i>
+								</div>
+								<h3 class="serif-heading text-2xl font-semibold">当前情况视图</h3>
+							</div>
+							<p class="text-gray-700 mb-6">实时展示个人全景状态的多维仪表盘</p>
+							<div class="space-y-3">
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-heart text-red-500"></i>
+									<span class="text-sm">健康概览：步数、睡眠、精力</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-tasks text-blue-500"></i>
+									<span class="text-sm">任务焦点：今日三大重要任务</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-smile text-yellow-500"></i>
+									<span class="text-sm">情绪状态：当前心情与波动曲线</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-bullseye text-green-500"></i>
+									<span class="text-sm">目标进度：关键目标完成度</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card rounded-2xl p-8">
+							<div class="flex items-center mb-6">
+								<div
+									class="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center mr-4">
+									<i class="fas fa-chart-line text-white text-xl"></i>
+								</div>
+								<h3 class="serif-heading text-2xl font-semibold">评估视图</h3>
+							</div>
+							<p class="text-gray-700 mb-6">基于特定时间段的深度分析与建议</p>
+							<div class="space-y-3">
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-balance-scale text-purple-500"></i>
+									<span class="text-sm">人生平衡轮：多维度投入分析</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-trending-up text-orange-500"></i>
+									<span class="text-sm">趋势分析：关键指标变化追踪</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-link text-blue-500"></i>
+									<span class="text-sm">关联性分析：变量间关系揭示</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-lightbulb text-yellow-500"></i>
+									<span class="text-sm">个性化建议：基于分析的改进方案</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="grid md:grid-cols-2 gap-8">
+						<div class="section-card rounded-2xl p-8">
+							<div class="flex items-center mb-6">
+								<div
+									class="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+									<i class="fas fa-clock text-white text-xl"></i>
+								</div>
+								<h3 class="serif-heading text-2xl font-semibold">时间轴视图</h3>
+							</div>
+							<p class="text-gray-700 mb-6">回顾历史与预测未来的连续人生故事</p>
+							<div class="space-y-3">
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-history text-orange-500"></i>
+									<span class="text-sm">历史追溯：自由缩放浏览轨迹</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-search text-green-500"></i>
+									<span class="text-sm">模式识别：高亮重复事件模式</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-calendar-alt text-blue-500"></i>
+									<span class="text-sm">未来规划：标记计划与预测</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-columns text-purple-500"></i>
+									<span class="text-sm">对比分析：不同阶段状态比较</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card rounded-2xl p-8">
+							<div class="flex items-center mb-6">
+								<div
+									class="w-12 h-12 bg-gradient-to-br from-red-400 to-red-600 rounded-xl flex items-center justify-center mr-4">
+									<i class="fas fa-gauge-high text-white text-xl"></i>
+								</div>
+								<h3 class="serif-heading text-2xl font-semibold">仪表盘视图</h3>
+							</div>
+							<p class="text-gray-700 mb-6">关键指标与目标进度的高效概览</p>
+							<div class="space-y-3">
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-chart-pie text-red-500"></i>
+									<span class="text-sm">核心KPI区域：净资产、体脂率等</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-percentage text-blue-500"></i>
+									<span class="text-sm">目标进度：重要目标完成百分比</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-exclamation-triangle text-yellow-500"></i>
+									<span class="text-sm">系统提醒：风险预警与建议</span>
+								</div>
+								<div class="flex items-center space-x-3">
+									<i class="fas fa-battery-three-quarters text-green-500"></i>
+									<span class="text-sm">状态指示器：综合状态评分</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Implementation Logic -->
+			<section id="implementation" class="py-16 px-8 bg-gray-50">
+				<div class="max-w-6xl mx-auto">
+					<h2 class="serif-heading text-4xl font-bold text-center mb-12">实现逻辑与技术架构</h2>
+
+					<!-- Implementation Roadmap -->
+					<div class="mb-12">
+						<div class="mermaid-container">
+							<div class="mermaid-controls">
+								<button class="mermaid-control-btn zoom-in" title="放大">
+									<i class="fas fa-search-plus"></i>
+								</button>
+								<button class="mermaid-control-btn zoom-out" title="缩小">
+									<i class="fas fa-search-minus"></i>
+								</button>
+								<button class="mermaid-control-btn reset-zoom" title="重置">
+									<i class="fas fa-expand-arrows-alt"></i>
+								</button>
+								<button class="mermaid-control-btn fullscreen" title="全屏查看">
+									<i class="fas fa-expand"></i>
+								</button>
+							</div>
+							<div class="mermaid">
+								timeline
+								title "个人人生同步系统实现路线图"
+
+								section "第一阶段：核心架构"
+								"节点系统设计" : "节点定义与属性"
+								: "层级关系建立"
+								"连接机制" : "关联规则定义"
+								: "影响权重设置"
+								"同步引擎" : "基本同步逻辑"
+								: "规则引擎实现"
+
+								section "第二阶段：功能模块"
+								"初始化模块" : "当前蓝图生成"
+								: "未来蓝图规划"
+								"记录系统" : "事件驱动模型"
+								: "时间轴视图"
+								"分析模块" : "基础数据统计"
+								: "趋势分析"
+
+								section "第三阶段：智能化"
+								"人生价值链" : "价值路径分析"
+								: "资源优化建议"
+								"预测系统" : "基于历史预测"
+								: "风险评估"
+								"智能提醒" : "情境感知提醒"
+								: "个性化建议"
+
+								section "第四阶段：完善优化"
+								"界面优化" : "用户体验提升"
+								: "多端同步"
+								"性能优化" : "数据处理优化"
+								: "响应速度提升"
+								"扩展接口" : "API开放"
+								: "第三方集成"
+							</div>
+						</div>
+					</div>
+
+					<!-- Core Implementation Principles -->
+					<div class="grid md:grid-cols-3 gap-8 mb-12">
+						<div class="section-card rounded-2xl p-8 text-center">
+							<div
+								class="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full mx-auto mb-6 flex items-center justify-center">
+								<i class="fas fa-database text-white text-2xl"></i>
+							</div>
+							<h3 class="serif-heading text-xl font-semibold mb-4">数据层设计</h3>
+							<div class="space-y-2 text-left">
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-check-circle text-green-500 text-sm"></i>
+									<span class="text-sm">图数据库模型</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-check-circle text-green-500 text-sm"></i>
+									<span class="text-sm">时间序列存储</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-check-circle text-green-500 text-sm"></i>
+									<span class="text-sm">多维度索引</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card rounded-2xl p-8 text-center">
+							<div
+								class="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full mx-auto mb-6 flex items-center justify-center">
+								<i class="fas fa-cogs text-white text-2xl"></i>
+							</div>
+							<h3 class="serif-heading text-xl font-semibold mb-4">逻辑层设计</h3>
+							<div class="space-y-2 text-left">
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-check-circle text-green-500 text-sm"></i>
+									<span class="text-sm">规则引擎</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-check-circle text-green-500 text-sm"></i>
+									<span class="text-sm">事件驱动架构</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-check-circle text-green-500 text-sm"></i>
+									<span class="text-sm">状态机管理</span>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card rounded-2xl p-8 text-center">
+							<div
+								class="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full mx-auto mb-6 flex items-center justify-center">
+								<i class="fas fa-desktop text-white text-2xl"></i>
+							</div>
+							<h3 class="serif-heading text-xl font-semibold mb-4">表现层设计</h3>
+							<div class="space-y-2 text-left">
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-check-circle text-green-500 text-sm"></i>
+									<span class="text-sm">响应式布局</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-check-circle text-green-500 text-sm"></i>
+									<span class="text-sm">数据可视化</span>
+								</div>
+								<div class="flex items-center space-x-2">
+									<i class="fas fa-check-circle text-green-500 text-sm"></i>
+									<span class="text-sm">交互式图表</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Key Innovations -->
+					<div class="section-card rounded-2xl p-8">
+						<h3 class="serif-heading text-2xl font-semibold mb-8 text-center">核心创新点</h3>
+						<div class="grid md:grid-cols-2 gap-8">
+							<div>
+								<h4 class="font-semibold mb-4 flex items-center">
+									<i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+									人生网模型
+								</h4>
+								<p class="text-gray-700 mb-4">
+									将人生各个维度抽象为相互关联的节点网络，通过连接定义影响关系，实现复杂人生系统的数字化建模。
+								</p>
+								<div class="bg-yellow-50 rounded-lg p-4">
+									<p class="text-sm text-yellow-800">
+										<strong>优势：</strong>能够模拟现实生活中的因果关系，提供具有逻辑依据的洞察和建议
+									</p>
+								</div>
+							</div>
+
+							<div>
+								<h4 class="font-semibold mb-4 flex items-center">
+									<i class="fas fa-sync-alt text-blue-500 mr-2"></i>
+									同步而非记录
+								</h4>
+								<p class="text-gray-700 mb-4">
+									区别于传统的状态记录系统，强调动态同步和实时关联，真正实现个人生活的数字化映射。
+								</p>
+								<div class="bg-blue-50 rounded-lg p-4">
+									<p class="text-sm text-blue-800">
+										<strong>优势：</strong>从被动记录工具转变为主动的个人成长教练
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- Conclusion -->
+			<section class="py-16 px-8 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+				<div class="max-w-4xl mx-auto text-center">
+					<h2 class="serif-heading text-4xl font-bold mb-8">构建你的人生操作系统</h2>
+					<p class="text-xl text-gray-300 mb-8 leading-relaxed">
+						个人人生同步系统不仅仅是一个数字化工具，更是一个陪伴你成长的智能伙伴。
+						通过全面的数据同步、深度的关联分析和前瞻性的指导建议，
+						帮助你更好地理解自己、规划未来，实现人生潜能的最大化。
+					</p>
+					<div class="grid md:grid-cols-3 gap-8 mt-12">
+						<div class="text-center">
+							<div
+								class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mx-auto mb-4 flex items-center justify-center">
+								<i class="fas fa-user text-2xl"></i>
+							</div>
+							<h3 class="font-semibold mb-2">深度个性化</h3>
+							<p class="text-sm text-gray-400">仅供个人使用，随时间成长而不断演进</p>
+						</div>
+						<div class="text-center">
+							<div
+								class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mx-auto mb-4 flex items-center justify-center">
+								<i class="fas fa-infinity text-2xl"></i>
+							</div>
+							<h3 class="font-semibold mb-2">全生命周期</h3>
+							<p class="text-sm text-gray-400">覆盖从精神层面到物质成就的各个维度</p>
+						</div>
+						<div class="text-center">
+							<div
+								class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mx-auto mb-4 flex items-center justify-center">
+								<i class="fas fa-rocket text-2xl"></i>
+							</div>
+							<h3 class="font-semibold mb-2">持续进化</h3>
+							<p class="text-sm text-gray-400">可扩展架构支持未来的功能增强和优化</p>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<script>
+			// Initialize Mermaid
+			mermaid.initialize({
+				startOnLoad: true,
+				theme: 'base',
+				themeVariables: {
+					primaryColor: '#9CAF88',
+					primaryTextColor: '#2D3436',
+					primaryBorderColor: '#2D3436',
+					lineColor: '#6B7D8C',
+					secondaryColor: '#F5F1E8',
+					tertiaryColor: '#E8E6E1',
+					background: '#FFFFFF',
+					mainBkg: '#FFFFFF',
+					secondaryBkg: '#F5F1E8',
+					tertiaryBkg: '#E8E6E1'
+				},
+				flowchart: {
+					useMaxWidth: true,
+					htmlLabels: true,
+					curve: 'basis'
+				},
+				timeline: {
+					useMaxWidth: true
+				},
+				fontFamily: 'Inter, sans-serif'
+			});
+
+			// Initialize Mermaid Controls for zoom and pan
+			function initializeMermaidControls() {
+				const containers = document.querySelectorAll('.mermaid-container');
+
+				containers.forEach(container => {
+					const mermaidElement = container.querySelector('.mermaid');
+					let scale = 1;
+					let isDragging = false;
+					let startX, startY, translateX = 0,
+						translateY = 0;
+
+					// 触摸相关状态
+					let isTouch = false;
+					let touchStartTime = 0;
+					let initialDistance = 0;
+					let initialScale = 1;
+					let isPinching = false;
+
+					// Zoom controls
+					const zoomInBtn = container.querySelector('.zoom-in');
+					const zoomOutBtn = container.querySelector('.zoom-out');
+					const resetBtn = container.querySelector('.reset-zoom');
+					const fullscreenBtn = container.querySelector('.fullscreen');
+
+					function updateTransform() {
+						mermaidElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+
+						if (scale > 1) {
+							container.classList.add('zoomed');
+						} else {
+							container.classList.remove('zoomed');
+						}
+
+						mermaidElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+					}
+
+					if (zoomInBtn) {
+						zoomInBtn.addEventListener('click', () => {
+							scale = Math.min(scale * 1.25, 4);
+							updateTransform();
+						});
+					}
+
+					if (zoomOutBtn) {
+						zoomOutBtn.addEventListener('click', () => {
+							scale = Math.max(scale / 1.25, 0.3);
+							if (scale <= 1) {
+								translateX = 0;
+								translateY = 0;
+							}
+							updateTransform();
+						});
+					}
+
+					if (resetBtn) {
+						resetBtn.addEventListener('click', () => {
+							scale = 1;
+							translateX = 0;
+							translateY = 0;
+							updateTransform();
+						});
+					}
+
+					if (fullscreenBtn) {
+						fullscreenBtn.addEventListener('click', () => {
+							if (container.requestFullscreen) {
+								container.requestFullscreen();
+							} else if (container.webkitRequestFullscreen) {
+								container.webkitRequestFullscreen();
+							} else if (container.msRequestFullscreen) {
+								container.msRequestFullscreen();
+							}
+						});
+					}
+
+					// Mouse Events
+					mermaidElement.addEventListener('mousedown', (e) => {
+						if (isTouch) return; // 如果是触摸设备，忽略鼠标事件
+
+						isDragging = true;
+						startX = e.clientX - translateX;
+						startY = e.clientY - translateY;
+						mermaidElement.style.cursor = 'grabbing';
+						updateTransform();
+						e.preventDefault();
+					});
+
+					document.addEventListener('mousemove', (e) => {
+						if (isDragging && !isTouch) {
+							translateX = e.clientX - startX;
+							translateY = e.clientY - startY;
+							updateTransform();
+						}
+					});
+
+					document.addEventListener('mouseup', () => {
+						if (isDragging && !isTouch) {
+							isDragging = false;
+							mermaidElement.style.cursor = 'grab';
+							updateTransform();
+						}
+					});
+
+					document.addEventListener('mouseleave', () => {
+						if (isDragging && !isTouch) {
+							isDragging = false;
+							mermaidElement.style.cursor = 'grab';
+							updateTransform();
+						}
+					});
+
+					// 获取两点之间的距离
+					function getTouchDistance(touch1, touch2) {
+						return Math.hypot(
+							touch2.clientX - touch1.clientX,
+							touch2.clientY - touch1.clientY
+						);
+					}
+
+					// Touch Events - 触摸事件处理
+					mermaidElement.addEventListener('touchstart', (e) => {
+						isTouch = true;
+						touchStartTime = Date.now();
+
+						if (e.touches.length === 1) {
+							// 单指拖动
+							isPinching = false;
+							isDragging = true;
+
+							const touch = e.touches[0];
+							startX = touch.clientX - translateX;
+							startY = touch.clientY - translateY;
+
+						} else if (e.touches.length === 2) {
+							// 双指缩放
+							isPinching = true;
+							isDragging = false;
+
+							const touch1 = e.touches[0];
+							const touch2 = e.touches[1];
+							initialDistance = getTouchDistance(touch1, touch2);
+							initialScale = scale;
+						}
+
+						e.preventDefault();
+					}, {
+						passive: false
+					});
+
+					mermaidElement.addEventListener('touchmove', (e) => {
+						if (e.touches.length === 1 && isDragging && !isPinching) {
+							// 单指拖动
+							const touch = e.touches[0];
+							translateX = touch.clientX - startX;
+							translateY = touch.clientY - startY;
+							updateTransform();
+
+						} else if (e.touches.length === 2 && isPinching) {
+							// 双指缩放
+							const touch1 = e.touches[0];
+							const touch2 = e.touches[1];
+							const currentDistance = getTouchDistance(touch1, touch2);
+
+							if (initialDistance > 0) {
+								const newScale = Math.min(Math.max(
+									initialScale * (currentDistance / initialDistance),
+									0.3
+								), 4);
+								scale = newScale;
+								updateTransform();
+							}
+						}
+
+						e.preventDefault();
+					}, {
+						passive: false
+					});
+
+					mermaidElement.addEventListener('touchend', (e) => {
+						// 重置状态
+						if (e.touches.length === 0) {
+							isDragging = false;
+							isPinching = false;
+							initialDistance = 0;
+
+							// 延迟重置isTouch，避免鼠标事件立即触发
+							setTimeout(() => {
+								isTouch = false;
+							}, 100);
+						} else if (e.touches.length === 1 && isPinching) {
+							// 从双指变为单指，切换为拖动模式
+							isPinching = false;
+							isDragging = true;
+
+							const touch = e.touches[0];
+							startX = touch.clientX - translateX;
+							startY = touch.clientY - translateY;
+						}
+
+						updateTransform();
+					});
+
+					mermaidElement.addEventListener('touchcancel', (e) => {
+						isDragging = false;
+						isPinching = false;
+						initialDistance = 0;
+
+						setTimeout(() => {
+							isTouch = false;
+						}, 100);
+
+						updateTransform();
+					});
+
+					// Enhanced wheel zoom with better center point handling
+					container.addEventListener('wheel', (e) => {
+						e.preventDefault();
+						const rect = container.getBoundingClientRect();
+						const centerX = rect.width / 2;
+						const centerY = rect.height / 2;
+
+						const delta = e.deltaY > 0 ? 0.9 : 1.1;
+						const newScale = Math.min(Math.max(scale * delta, 0.3), 4);
+
+						// Adjust translation to zoom towards center
+						if (newScale !== scale) {
+							const scaleDiff = newScale / scale;
+							translateX = translateX * scaleDiff;
+							translateY = translateY * scaleDiff;
+							scale = newScale;
+
+							if (scale <= 1) {
+								translateX = 0;
+								translateY = 0;
+							}
+
+							updateTransform();
+						}
+					});
+
+					// Initialize display
+					updateTransform();
+				});
+			}
+
+			document.addEventListener('DOMContentLoaded', function() {
+				initializeMermaidControls();
+			});
+
+			// Smooth scrolling for anchor links
+			document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+				anchor.addEventListener('click', function(e) {
+					e.preventDefault();
+					const target = document.querySelector(this.getAttribute('href'));
+					if (target) {
+						target.scrollIntoView({
+							behavior: 'smooth',
+							block: 'start'
+						});
+					}
+				});
+			});
+
+			// Mobile TOC toggle
+			const tocToggle = document.getElementById('toc-toggle');
+			const toc = document.getElementById('toc');
+
+			tocToggle.addEventListener('click', function(e) {
+				e.stopPropagation();
+				toc.classList.toggle('open');
+			});
+
+			// Close TOC when clicking outside on mobile
+			document.addEventListener('click', function(e) {
+				if (window.innerWidth <= 1024 && !toc.contains(e.target) && !tocToggle.contains(e.target)) {
+					toc.classList.remove('open');
+				}
+			});
+
+			// Highlight active section in TOC
+			const sections = document.querySelectorAll('section[id]');
+			const tocLinks = document.querySelectorAll('#toc a[href^="#"]');
+
+			function highlightActiveSection() {
+				let currentSection = '';
+				sections.forEach(section => {
+					const rect = section.getBoundingClientRect();
+					if (rect.top <= 100 && rect.bottom >= 100) {
+						currentSection = section.id;
+					}
+				});
+
+				tocLinks.forEach(link => {
+					link.classList.remove('bg-gray-100', 'text-gray-800');
+					if (link.getAttribute('href') === `#${currentSection}`) {
+						link.classList.add('bg-gray-100', 'text-gray-800');
+					}
+				});
+			}
+
+			window.addEventListener('scroll', highlightActiveSection);
+			highlightActiveSection(); // Initial call
+		</script>
+	</body>
+
+</html>
